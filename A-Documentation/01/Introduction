@@ -1,0 +1,46 @@
+Preface:
+    1 - Introduction
+    2 - Licence
+    3 - Core features (as of time of writing)
+    4 - Required dependencies 
+
+
+
+
+1 - Introduction
+
+    The VNiX Operating System is a Unix-Like OS that is being developed by the Aspen Software Foundation for a specific purpose
+    This purpose is to run multiple executable files in the same operating system without having to dual boot. The main executable
+    types that this OS plans to run are the Microsoft Windows' EXE type, and Linux's ELF type. 
+
+
+2 - License
+
+    Most of the components inside this operating system are licensed under the GNU General Public License Version 2 or later unless specified
+    otherwise inside the file via comments or code attribution. For more information about this license, visit https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+    or see to the LICENSE file in the project's root directory.
+
+
+3 - Core features
+
+    Currently, the VNiX Operating System uses Cuoreterm for the framebuffer. Cuoreterm is a super lightweight and freestanding framebuffer made by JerryJhird
+    for CuoreOS. VNiX also features RISCV32 program support, made by Dcraftbg. For more information about either one of these project, visit the links below:
+
+    CuoreOS: https://github.com/jerryjhird/CuoreOS
+    Cuoreterm: https://github.com/jerryjhird/Cuoreterm
+    rv_vm.h: https://codeberg.org/Dcraftbg/rv_vm.h
+
+
+4 - Required dependencies 
+
+    Below are the required dependencies for building this project from scratch:
+
+    make
+    parted
+    qemu-system-x86_64
+    gcc
+    ld
+
+
+
+NOTE: Windows is copyrighted and trademarked by the Microsoft Corporation. Linux is trademarked by Linus Torvalds.

@@ -40,7 +40,7 @@
 #include "../drivers/framebuffer/src/kfont.h"
 #include "../../limine/limine.h"
 #include "../includes/util/math.h"
-#include "../includes/libc/stdio.h"
+#include "../includes/klibc/stdio.h"
 
 
 
@@ -75,12 +75,10 @@ void kernel_main(void) {
 
     // optionally clear the screen
     cuoreterm_clear(&fb_term);
-   writestr(&fb_term, "Welcome to the VNiX Operating System,\x1b[#FF0000m made by Aspen\x1b[0m\n", 68); 
-   writestr(&fb_term, "\x1b[#7300FFm[ debug ]\x1b[0m Successfully initalized kernel\n", 56);
-    int x = 4;
-    int y = 2;
-    int z = x + y;
-    kprintf("Math Test: %d + %d = %d\n", x, y, z);
+    writestr(&fb_term, "Welcome to the VNiX Operating System,\x1b[#FF0000m made by Aspen\x1b[0m\n", 68); 
+    writestr(&fb_term, "\x1b[#7300FFm[ debug ]\x1b[0m Successfully initalized kernel\n", 56);
+
+    
 
 
 

@@ -36,7 +36,7 @@
  * MA 02110-1301, USA.
 */
 
-#include "../../includes/libc/memory.h"
+#include "../../includes/klibc/memory.h"
 #include "../../drivers/framebuffer/src/cuoreterm.h"
 #include <stdint.h>
 #include <stddef.h>
