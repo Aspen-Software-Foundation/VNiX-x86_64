@@ -53,8 +53,6 @@ void kernel_main(void) {
     struct limine_framebuffer *fb = fb_req.response->framebuffers[0];
     terminal_set_instance(&fb_term, 0xFFFFFF);
 
-    serial_init();
-
     cuoreterm_init(
          &fb_term,
          (void *)fb->address,
@@ -72,6 +70,8 @@ void kernel_main(void) {
          8,
          14
     );
+
+    serial_init();
 
     // optionally clear the screen
     cuoreterm_clear(&fb_term);

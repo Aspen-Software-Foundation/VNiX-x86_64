@@ -2,35 +2,37 @@
 //Source: https://codeberg.org/jerryjhird/CuoreOS
 //License: MPLv2.0
 
+/*
+This Source Code Form is subject to the terms of the Mozilla Public License, version 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at 
+https://mozilla.org/MPL/2.0/.
+*/
+
 #include "../../includes/arch/x86_64/io.h"
 #include <stdint.h>
 #include <stddef.h>
 
-#define SERIAL_COM1  0x3f8          // COM1
+#define SERIAL_COM1  0x3F8          // COM1
+
+
 void serial_init(void) {
-   outb(SERIAL_COM1  + 1, 0x00);    // Disable all interrupts
-   outb(SERIAL_COM1  + 3, 0x80);    // Enable DLAB (set baud rate divisor)
-   outb(SERIAL_COM1  + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
-   outb(SERIAL_COM1  + 1, 0x00);    //                  (hi byte)
-   outb(SERIAL_COM1  + 3, 0x03);    // 8 bits, no parity, one stop bit
-   outb(SERIAL_COM1  + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
-   outb(SERIAL_COM1  + 4, 0x0B);    // IRQs enabled, RTS/DSR set
-   outb(SERIAL_COM1  + 4, 0x1E);    // Set in loopback mode, test the serial chip
-   outb(SERIAL_COM1 + 0, 0xAE);    // Test serial chip (send byte 0xAE and check if serial returns same byte)
-
-
-    outb(SERIAL_COM1  + 4, 0x1E); 
-    outb(SERIAL_COM1  + 0, 0xAE);
+    outb(SERIAL_COM1 + 1, 0x00);    // disable interrupts
+    outb(SERIAL_COM1 + 3, 0x80);    // enable DLAB
+    outb(SERIAL_COM1 + 0, 0x01);    // divisor low byte (115200 baud)
+    outb(SERIAL_COM1 + 1, 0x00);    // divisor high byte
+    outb(SERIAL_COM1 + 3, 0x03);    
+    outb(SERIAL_COM1 + 2, 0xC7);    // enable FIFO
+    outb(SERIAL_COM1 + 4, 0x0B);    // IRQs enabled, RTS/DSR set
 }
 
 // wait for transmitter to be empty
 static void serial_wait_tx(void) {
-    while (!(inb(SERIAL_COM1  + 5) & 0x20)) {}
+    while (!(inb(SERIAL_COM1 + 5) & 0x20)) {}
 }
 
 static void serial_putc(char c) {
     serial_wait_tx();
-    outb(SERIAL_COM1 , (uint8_t)c);
+    outb(SERIAL_COM1, (uint8_t)c);
 }
 
 void serial_write(const char *msg, size_t len) {
