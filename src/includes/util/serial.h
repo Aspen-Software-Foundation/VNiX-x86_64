@@ -1,6 +1,6 @@
-//Author: Jerry Jhird
-//Source: https://codeberg.org/jerryjhird/CuoreOS
-//License: MPLv2.0
+// Author: Jerry Jhird
+// Source: https://codeberg.org/jerryjhird/CuoreOS
+// License: MPLv2.0
 
 /*
 This Source Code Form is subject to the terms of the Mozilla Public License, version 2.0.
@@ -21,10 +21,7 @@ void serial_init(void);
 void serial_write(const char *msg, size_t len);
 void serial_putc(char c);
 
-#ifndef nl_serial_write // defined in panic.h because used to write panic messages
-void serial_write(const char *msg, size_t len);
 #define nl_serial_write(str) serial_write(str, sizeof(str)-1)
-#endif
 
 #ifdef __cplusplus
 }

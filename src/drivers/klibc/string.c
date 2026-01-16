@@ -37,7 +37,7 @@
 */
 
 
-#include "../../includes/klibc/memory.h"
+#include "includes/klibc/memory.h"
 
 int8_t strncmp(const char *str1, const char *str2, size_t n) {
     while (n-- > 0) {
@@ -52,7 +52,6 @@ int8_t strncmp(const char *str1, const char *str2, size_t n) {
     }
     return 0;  // Return 0 if strings are equal up to n characters
 }
-
 
 size_t strlen(const char *str) {
     size_t l = 0;

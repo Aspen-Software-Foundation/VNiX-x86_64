@@ -36,16 +36,12 @@
  * MA 02110-1301, USA.
 */
 
-#include "../../includes/klibc/memory.h"
-#include "../../drivers/framebuffer/src/cuoreterm.h"
+#include "includes/klibc/memory.h"
+#include "drivers/terminal/src/cuoreterm.h"
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 
-// Terminal structure and output function (to be implemented elsewhere)
-struct terminal;
-extern void cuoreterm_draw_char(struct terminal *term, char c, uint32_t fg);
-
-// Global terminal instance and default color
 static struct terminal *global_term = NULL;
 static uint32_t global_fg = 0xFFFFFF;
 
@@ -57,15 +53,15 @@ void terminal_set_instance(struct terminal *term, uint32_t fg) {
 int kprintf(const char *format, ...) {
     if (!global_term) return -1;
 
-    char **arg = (char **)&format;
+    va_list args;
+    va_start(args, format);
+
     uint32_t c;
     char buf[64];
     char *p = NULL, *p2 = NULL;
     int pad = 0;
     char pad_char = ' ';
     int chars_written = 0;
-
-    arg++; // skip format string pointer
 
     while ((c = *format++) != 0) {
         pad = 0;
@@ -95,12 +91,13 @@ int kprintf(const char *format, ...) {
             case 'u':
             case 'x':
             case 'o':
-                itoa(*((int *)arg++), buf, (c == 'x') ? 16 : (c == 'o') ? 8 : 10);
+                itoa(va_arg(args, int), buf,
+                     (c == 'x') ? 16 : (c == 'o') ? 8 : 10);
                 p = buf;
                 break;
 
             case 'f': {
-                double fval = *((double *)arg++);
+                double fval = va_arg(args, double);
                 int int_part = (int)fval;
                 double frac = fval - int_part;
                 itoa(int_part, buf, 10);
@@ -122,17 +119,17 @@ int kprintf(const char *format, ...) {
             }
 
             case 's':
-                p = *arg++;
+                p = va_arg(args, char *);
                 if (!p) p = "(null)";
                 break;
 
             case 'c':
-                cuoreterm_draw_char(global_term, *((int *)arg++), global_fg);
+                cuoreterm_draw_char(global_term, va_arg(args, int), global_fg);
                 chars_written++;
                 continue;
 
             case 'p':
-                itoa((uintptr_t)*((void **)arg++), buf, 16);
+                itoa((uintptr_t)va_arg(args, void *), buf, 16);
                 cuoreterm_draw_char(global_term, '0', global_fg);
                 cuoreterm_draw_char(global_term, 'x', global_fg);
                 chars_written += 2;
@@ -140,7 +137,7 @@ int kprintf(const char *format, ...) {
                 break;
 
             case 'm': // memory
-                p = *arg++;
+                p = va_arg(args, char *);
                 if (!p) p = "(null)";
                 for (size_t i = 0; i < (size_t)(pad ? pad : 16); i++) {
                     cuoreterm_draw_char(global_term, p[i], global_fg);
@@ -167,5 +164,6 @@ int kprintf(const char *format, ...) {
         }
     }
 
+    va_end(args);
     return chars_written;
 }

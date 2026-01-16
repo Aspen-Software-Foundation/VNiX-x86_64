@@ -36,13 +36,13 @@
  * MA 02110-1301, USA.
 */
 
-#include "../drivers/framebuffer/src/cuoreterm.h"
-#include "../drivers/framebuffer/src/kfont.h"
-#include "../../limine/limine.h"
-#include "../includes/klibc/stdio.h"
-#include "../includes/util/serial.h"
-#include "../includes/arch/x86_64/idt.h"
-#include "../includes/arch/x86_64/gdt.h"
+#include "drivers/terminal/src/cuoreterm.h"
+#include "drivers/terminal/src/kfont.h"
+#include "arch/limine.h"
+#include "includes/klibc/stdio.h"
+#include "includes/util/serial.h"
+#include "includes/arch/x86_64/idt.h"
+#include "includes/arch/x86_64/gdt.h"
 
 static volatile struct limine_framebuffer_request fb_req = {
     .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
@@ -85,8 +85,6 @@ void kernel_main(void) {
 
     GDT_Initialize();
     IDT_Initialize();
-
-
 
     while (1);
 }
