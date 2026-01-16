@@ -2,10 +2,10 @@
     Copyright (C) 2026 Aspen Software Foundation
 
     Module: io.h
-    Description: I/O module for the VNiX Operating System
+    Description: I/O module for the Ancore Operating System
     Author: Yazin Tantawi
 
-    All components of the VNiX Operating System, except where otherwise noted, 
+    All components of the Ancore Operating System, except where otherwise noted, 
     are copyright of the Aspen Software Foundation (and the corresponding author(s)) and licensed under GPLv2 or later.
     For more information on the GNU Public License Version 2, please refer to the LICENSE file
     or to the link provided here: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
@@ -40,8 +40,79 @@
 #define IO_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 uint8_t inb(uint16_t port);
 void outb(uint16_t port, uint8_t val);
 
+#define PAGE_SIZE 4096
+#define ALIGN_UP(address, alignment) (((address) + (alignment - 1)) & ~((alignment) - 1))
+#define ALIGN_DOWN(address, alignment) ((address) & ~((alignment) - 1))
+
+//#define enable_interrupts() __asm__ ("cli")
+//#define disable_interrupts() __asm__ ("sti")
+
+typedef uint64_t virt_addr_t;
+typedef uint64_t physc_addr_t;
+
+static inline void hcf(void)
+{
+  for (;;)
+  {
+    __asm__("hlt");
+  }
+}
+
+typedef struct list_t 
+{
+    struct list_t *next, *prev;
+} list_t;
+
+static inline void list_init(list_t *list) {
+    list->next = list;
+    list->prev = list;
+}
+
+static inline list_t *list_last(list_t *list) {
+    return list->prev != list ? list->prev : NULL;
+}
+
+static inline list_t *list_next(list_t *list) {
+    return list->next != list ? list->next : NULL;
+}
+
+static inline void list_insert(list_t *new, list_t *link) {
+    new->prev = link->prev;
+    new->next = link;
+    new->prev->next = new;
+    new->next->prev = new;
+}
+
+static inline void list_append(list_t *new, list_t *into) {
+    list_insert(new, into);
+}
+
+static inline void list_remove(list_t *list) {
+    list->prev->next = list->next;
+    list->next->prev = list->prev;
+    list->next = list;
+    list->prev = list;
+}
+
+
+static inline uint64_t read_cr3(void)
+{
+    uint64_t val;
+    __asm__ volatile(
+        "mov %%cr3, %0" : "=r"(val));
+    return val;
+}
+
+static inline void set_cr3(uint64_t val)
+{
+    __asm__ volatile("mov %0, %%cr3" :: "r"(val));
+}
+
+void enable_interrupts();
+void disable_interrupts();
 #endif

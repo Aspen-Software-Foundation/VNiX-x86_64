@@ -1,7 +1,7 @@
 # 	Copyright (C) 2026 Aspen Software Foundation
 #
 # 	Module: Makefile
-# 	Description: The main build system for the VNiX Operating System
+# 	Description: The main build system for the Ancore Operating System
 # 	Author: Yazin Tantawi (and Jerry Jhird)
 
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
@@ -24,9 +24,9 @@ kernel:
 	gcc -ffreestanding -c src/arch/x86_64/gdt.c -o build/gdt.o $(CFLAGS)
 	gcc -ffreestanding -c src/arch/x86_64/idt.c -o build/idt.o $(CFLAGS)
 	gcc -ffreestanding -c src/arch/x86_64/io.c -o build/io.o $(CFLAGS)
+	gcc -ffreestanding -c src/drivers/memory/pmm.c -o build/pmm.o $(CFLAGS)
 	
-	ld -T linker.ld -nostdlib -static -o build/kernel.elf build/kernel.o build/term.o build/stdio.o build/memory.o  build/serial.o  build/io.o build/idt.o build/gdt.o
-
+	ld -T linker.ld -nostdlib -static -o build/kernel.elf build/kernel.o build/term.o build/stdio.o build/memory.o  build/serial.o  build/io.o build/idt.o build/gdt.o build/pmm.o
 build/uefi.img: kernel 
 	@printf ">>> Creating UEFI bootable image: $@\n"
 

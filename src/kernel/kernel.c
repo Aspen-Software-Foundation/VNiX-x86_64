@@ -2,10 +2,10 @@
     Copyright (C) 2026 Aspen Software Foundation
 
     Module: kernel.c
-    Description: The UEFI kernel for the VNiX Operating System.
+    Description: The UEFI kernel for the Ancore Operating System.
     Author: Yazin Tantawi
 
-    All components of the VNiX Operating System, except where otherwise noted, 
+    All components of the Ancore Operating System, except where otherwise noted, 
     are copyright of the Aspen Software Foundation (and the corresponding author(s)) and licensed under GPLv2 or later.
     For more information on the Gnu Public License Version 2, please refer to the LICENSE file
     or to the link provided here: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
@@ -43,6 +43,7 @@
 #include "includes/util/serial.h"
 #include "includes/arch/x86_64/idt.h"
 #include "includes/arch/x86_64/gdt.h"
+#include "includes/memory/pmm.h"
 
 static volatile struct limine_framebuffer_request fb_req = {
     .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
@@ -77,14 +78,15 @@ void kernel_main(void) {
     serial_init();
     // optionally clear the screen
     cuoreterm_clear(&fb_term);
-    writestr(&fb_term, "Welcome to the VNiX Operating System,\x1b[#FF0000m made by Aspen\x1b[0m\n", 68);
-    serial_write("Welcome to the VNiX Operating System, made by Aspen\n", 52);
+    writestr(&fb_term, "Welcome to the Ancore Operating System,\x1b[#FF0000m made by Aspen\x1b[0m\n", 68);
+    serial_write("Welcome to the Ancore Operating System, made by Aspen\n", 52);
 
     writestr(&fb_term, "\x1b[#7300FFm[ debug ]\x1b[0m Successfully initalized kernel\n", 56);
     serial_write("[ debug ] Successfully initalized kernel\n", 56);
 
     GDT_Initialize();
     IDT_Initialize();
-
+    pmm_init();
+    enable_interrupts();
     while (1);
 }

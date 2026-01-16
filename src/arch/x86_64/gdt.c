@@ -2,10 +2,10 @@
     Copyright (C) 2026 Aspen Software Foundation
 
     Module: gdt.c
-    Description: GDT module for the VNiX Operating System
+    Description: GDT module for the Ancore Operating System
     Author: Mejd Almohammedi 
 
-    All components of the VNiX Operating System, except where otherwise noted, 
+    All components of the Ancore Operating System, except where otherwise noted, 
     are copyright of the Aspen Software Foundation (and the corresponding author(s)) and licensed under GPLv2 or later.
     For more information on the GNU Public License Version 2, please refer to the LICENSE file
     or to the link provided here: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
@@ -194,11 +194,11 @@ void GDT_Initialize() {
     __asm__ volatile ("mov %%ds, %0" : "=r"(ds));
 
     if (cs == GDT_CODE_SEGMENT && ds == GDT_DATA_SEGMENT) {
-        kprintf(" [  OK  ] GDT initialized successfully\n");
-        serial_write("[  OK  ] GDT initialized successfully\n", 39);
+        kprintf(" [  OK  ] arch/x86_64/gdt.c: GDT initialized successfully\n");
+        serial_write("[  OK  ]  arch/x86_64/gdt.c: GDT initialized successfully\n", 59);
     } else {
-        kprintf(" [ FATAL ] Failed to initialize GDT\n");
-        serial_write("[ FATAL ] Failed to initialize GDT, halting...\n", 48);
+        kprintf(" [ FATAL ] arch/x86_64/gdt.c: Failed to initialize GDT\n");
+        serial_write("[ FATAL ] arch/x86_64/gdt.c: Failed to initialize GDT, halting...\n", 68);
         halt();
         
     }
