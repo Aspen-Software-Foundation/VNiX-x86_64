@@ -6,7 +6,7 @@ Preface:
 
 1 - Introduction
 
-    The Ancore Operating System is a Unix-Like OS that is being developed by the Aspen Software Foundation for a specific purpose
+    The Ancore Operating System (ancoreOS) is a Unix-Like OS that is being developed by the Aspen Software Foundation for a specific purpose
     This purpose is to run multiple executable files in the same operating system without having to dual boot. The main executable
     types that this OS plans to run are the Microsoft Windows' EXE type, and Linux's ELF type. 
 
@@ -40,6 +40,7 @@ Preface:
     qemu-system-x86_64
     gcc
     ld
+    bear
 
 
 

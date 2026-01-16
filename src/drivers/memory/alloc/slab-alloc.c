@@ -2,6 +2,7 @@
 #include "includes/klibc/string.h"
 #include "includes/memory/alloc/slab-alloc.h"
 #include "includes/util/serial.h"
+#include "includes/klibc/string.h"
 
 extern kernel_params_t *kernel_params;
 
