@@ -39,9 +39,10 @@
 // Despite the lack of legal requirements, this file is licensed by Nanobyte under the unlicense:
 // https://github.com/nanobyte-dev/nanobyte_os/blob/master/LICENSE
 
-#include "../../includes/arch/x86_64/gdt.h"
+#include "includes/arch/x86_64/gdt.h"
 #include <stdint.h>
-#include "../../includes/klibc/stdio.h"
+#include "includes/klibc/stdio.h"
+#include "includes/util/serial.h"
 
 void terminal_set_instance(struct terminal *term, uint32_t fg);
 

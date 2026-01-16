@@ -1,1 +1,5 @@
-/build/
+# build files
+build/
+
+# clangd cache files
+.cache/

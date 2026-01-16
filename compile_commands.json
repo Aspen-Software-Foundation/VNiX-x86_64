@@ -1,0 +1,178 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "src/",
+      "-ffreestanding",
+      "-Wall",
+      "-Wextra",
+      "-Wunused-parameter",
+      "-fno-pie",
+      "-mno-red-zone",
+      "-mcmodel=large",
+      "-o",
+      "build/kernel.o",
+      "src/kernel/kernel.c"
+    ],
+    "directory": "/home/jerry/Dev/VNiX-Operating-System-x86_64",
+    "file": "/home/jerry/Dev/VNiX-Operating-System-x86_64/src/kernel/kernel.c",
+    "output": "/home/jerry/Dev/VNiX-Operating-System-x86_64/build/kernel.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "src/",
+      "-ffreestanding",
+      "-Wall",
+      "-Wextra",
+      "-Wunused-parameter",
+      "-fno-pie",
+      "-mno-red-zone",
+      "-mcmodel=large",
+      "-o",
+      "build/term.o",
+      "src/drivers/terminal/src/term.c"
+    ],
+    "directory": "/home/jerry/Dev/VNiX-Operating-System-x86_64",
+    "file": "/home/jerry/Dev/VNiX-Operating-System-x86_64/src/drivers/terminal/src/term.c",
+    "output": "/home/jerry/Dev/VNiX-Operating-System-x86_64/build/term.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "src/",
+      "-ffreestanding",
+      "-Wall",
+      "-Wextra",
+      "-Wunused-parameter",
+      "-fno-pie",
+      "-mno-red-zone",
+      "-mcmodel=large",
+      "-o",
+      "build/memory.o",
+      "src/drivers/klibc/memory.c"
+    ],
+    "directory": "/home/jerry/Dev/VNiX-Operating-System-x86_64",
+    "file": "/home/jerry/Dev/VNiX-Operating-System-x86_64/src/drivers/klibc/memory.c",
+    "output": "/home/jerry/Dev/VNiX-Operating-System-x86_64/build/memory.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "src/",
+      "-ffreestanding",
+      "-Wall",
+      "-Wextra",
+      "-Wunused-parameter",
+      "-fno-pie",
+      "-mno-red-zone",
+      "-mcmodel=large",
+      "-o",
+      "build/stdio.o",
+      "src/drivers/klibc/stdio.c"
+    ],
+    "directory": "/home/jerry/Dev/VNiX-Operating-System-x86_64",
+    "file": "/home/jerry/Dev/VNiX-Operating-System-x86_64/src/drivers/klibc/stdio.c",
+    "output": "/home/jerry/Dev/VNiX-Operating-System-x86_64/build/stdio.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "src/",
+      "-ffreestanding",
+      "-Wall",
+      "-Wextra",
+      "-Wunused-parameter",
+      "-fno-pie",
+      "-mno-red-zone",
+      "-mcmodel=large",
+      "-o",
+      "build/serial.o",
+      "src/drivers/util/serial.c"
+    ],
+    "directory": "/home/jerry/Dev/VNiX-Operating-System-x86_64",
+    "file": "/home/jerry/Dev/VNiX-Operating-System-x86_64/src/drivers/util/serial.c",
+    "output": "/home/jerry/Dev/VNiX-Operating-System-x86_64/build/serial.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "src/",
+      "-ffreestanding",
+      "-Wall",
+      "-Wextra",
+      "-Wunused-parameter",
+      "-fno-pie",
+      "-mno-red-zone",
+      "-mcmodel=large",
+      "-o",
+      "build/gdt.o",
+      "src/arch/x86_64/gdt.c"
+    ],
+    "directory": "/home/jerry/Dev/VNiX-Operating-System-x86_64",
+    "file": "/home/jerry/Dev/VNiX-Operating-System-x86_64/src/arch/x86_64/gdt.c",
+    "output": "/home/jerry/Dev/VNiX-Operating-System-x86_64/build/gdt.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "src/",
+      "-ffreestanding",
+      "-Wall",
+      "-Wextra",
+      "-Wunused-parameter",
+      "-fno-pie",
+      "-mno-red-zone",
+      "-mcmodel=large",
+      "-o",
+      "build/idt.o",
+      "src/arch/x86_64/idt.c"
+    ],
+    "directory": "/home/jerry/Dev/VNiX-Operating-System-x86_64",
+    "file": "/home/jerry/Dev/VNiX-Operating-System-x86_64/src/arch/x86_64/idt.c",
+    "output": "/home/jerry/Dev/VNiX-Operating-System-x86_64/build/idt.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "src/",
+      "-ffreestanding",
+      "-Wall",
+      "-Wextra",
+      "-Wunused-parameter",
+      "-fno-pie",
+      "-mno-red-zone",
+      "-mcmodel=large",
+      "-o",
+      "build/io.o",
+      "src/arch/x86_64/io.c"
+    ],
+    "directory": "/home/jerry/Dev/VNiX-Operating-System-x86_64",
+    "file": "/home/jerry/Dev/VNiX-Operating-System-x86_64/src/arch/x86_64/io.c",
+    "output": "/home/jerry/Dev/VNiX-Operating-System-x86_64/build/io.o"
+  }
+]

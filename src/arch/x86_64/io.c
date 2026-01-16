@@ -37,8 +37,7 @@
 */
 
 #include <stdint.h>
-#include "../../includes/arch/x86_64/io.h"
-
+#include "includes/arch/x86_64/io.h"
 
 uint8_t inb(uint16_t port) {
     uint8_t ret;

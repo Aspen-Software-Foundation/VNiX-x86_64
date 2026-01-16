@@ -39,11 +39,11 @@
 // Despite the lack of legal requirements, this file is licensed by Nanobyte under the unlicense:
 // https://github.com/nanobyte-dev/nanobyte_os/blob/master/LICENSE
 
-#include "../../includes/arch/x86_64/idt.h"
-#include "../../includes/arch/x86_64/io.h"
-#include "../../includes/klibc/memory.h"
+#include "includes/arch/x86_64/idt.h"
+#include "includes/arch/x86_64/gdt.h"
+#include "includes/klibc/stdio.h"
 #include <stdint.h>
-#include "../../includes/util/serial.h"
+#include "includes/util/serial.h"
 
 void terminal_set_instance(struct terminal *term, uint32_t fg);
 
@@ -67,12 +67,9 @@ typedef struct {
     uint64_t Ptr;
 } __attribute__((packed)) IDTDescriptor_t;
 
-
-
-
 IDTEntry_t g_IDT[256];
 
-IDTDescriptor_t g_IDTDescriptor = { sizeof(g_IDT) - 1, g_IDT };
+IDTDescriptor_t g_IDTDescriptor = { sizeof(g_IDT) - 1, (uint64_t)g_IDT };
 
 void IDT_Load(IDTDescriptor_t *idtDescriptor) {
     __asm__ __volatile__ ("lidt (%0)" :: "r"(idtDescriptor));
