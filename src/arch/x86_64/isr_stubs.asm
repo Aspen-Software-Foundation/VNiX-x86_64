@@ -20,7 +20,6 @@ ISR%1:
     jmp isr_common_stub
 %endmacro
 
-; CPU Exception ISRs (0-31)
 ISR_NOERRORCODE 0
 ISR_NOERRORCODE 1
 ISR_NOERRORCODE 2
@@ -280,11 +279,10 @@ ISR_NOERRORCODE 253
 ISR_NOERRORCODE 254
 ISR_NOERRORCODE 255
 
-; Common ISR stub - saves context and calls C handler
 extern ISR_Handler
 
 isr_common_stub:
-    ; Save all general purpose registers
+
     push rax
     push rbx
     push rcx
@@ -324,5 +322,5 @@ isr_common_stub:
     
     add rsp, 16
     
-    ; Enable interrupts and return from interrupt
+    ; enable interrupts and return from interrupt
     iretq

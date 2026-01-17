@@ -190,10 +190,10 @@ void GDT_Initialize() {
 
     if (cs == GDT_CODE_SEGMENT && ds == GDT_DATA_SEGMENT) {
         kprintf(" [  OK  ] arch/x86_64/gdt.c: GDT initialized successfully\n");
-        serial_write("[  OK  ]  arch/x86_64/gdt.c: GDT initialized successfully\n", 59);
+        serial_write("[  OK  ] arch/x86_64/gdt.c: GDT initialized successfully\n", 59);
     } else {
-        kprintf(" [ FATAL ] arch/x86_64/gdt.c: Failed to initialize GDT\n");
-        serial_write("[ FATAL ] arch/x86_64/gdt.c: Failed to initialize GDT, halting...\n", 68);
+        kprintf(" [ FAIL ] arch/x86_64/gdt.c: Failed to initialize GDT\n");
+        serial_write("[ FAIL ] arch/x86_64/gdt.c: Failed to initialize GDT, halting...\n", 68);
         halt();
         
     }
