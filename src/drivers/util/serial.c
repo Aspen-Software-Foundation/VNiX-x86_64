@@ -102,6 +102,23 @@ void serial_printf(const char *fmt, ...) {
     for (const char *p = fmt; *p; p++) {
         if (*p == '%' && *(p + 1)) {
             p++;
+            
+            // handle length modifiers: l, ll, L
+            int is_long = 0;
+            int is_longlong = 0;
+            if (*p == 'l') {
+                p++;
+                if (*p == 'l') {
+                    is_longlong = 1;
+                    p++;
+                } else {
+                    is_long = 1;
+                }
+            } else if (*p == 'L') {
+                is_longlong = 1;
+                p++;
+            }
+            
             switch (*p) {
                 case 'd':  
                 case 'i':
@@ -113,16 +130,36 @@ void serial_printf(const char *fmt, ...) {
                     break;
                     
                 case 'x': 
-                    serial_print_hex(va_arg(args, unsigned int), 0);
+                    if (is_longlong) {
+                        uint64_t val = va_arg(args, uint64_t);
+                        serial_write("0x");
+                        serial_print_hex(val, 16);
+                    } else if (is_long) {
+                        long val = va_arg(args, long);
+                        if (val != 0) serial_write("0x");
+                        serial_print_hex((uint64_t)val, 16);
+                    } else {
+                        unsigned int val = va_arg(args, unsigned int);
+                        if (val != 0) serial_write("0x");
+                        serial_print_hex(val, 0);
+                    }
                     break;
                     
                 case 'X': 
-                    serial_print_hex(va_arg(args, unsigned int), 0);
+                    if (is_longlong) {
+                        uint64_t val = va_arg(args, uint64_t);                        serial_write("0x");                        serial_print_hex(val, 16);
+                    } else if (is_long) {
+                        long val = va_arg(args, long);
+                        serial_print_hex((uint64_t)val, 16);
+                    } else {
+                        unsigned int val = va_arg(args, unsigned int);
+                        serial_print_hex(val, 0);
+                    }
                     break;
                     
                 case 'p':  
                     serial_write("0x");
-                    serial_print_hex(va_arg(args, uint64_t), 16);
+                    serial_print_hex(va_arg(args, uint64_t), 0);
                     break;
                     
                 case 's': 

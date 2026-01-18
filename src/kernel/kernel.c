@@ -47,6 +47,7 @@
 #include "includes/arch/x86_64/gdt.h"
 #include "includes/arch/x86_64/isr.h"
 #include "includes/memory/pmm.h"
+#include "includes/memory/vmm.h"
 
 static volatile struct limine_framebuffer_request fb_req = {
     .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
@@ -88,10 +89,60 @@ void kernel_main(void) {
 
     GDT_Initialize();
     IDT_Initialize();
+    vmm_init();
     pmm_init();
     enable_interrupts();
     ISR_Initialize();
 
+    void vmm_test_mapping(void) {
+    uint64_t virt = 0x1000000000;  // example virtual address
+    uint64_t phys = 0x200000;      // example physical address
+
+
+    map_page(virt, phys, PTE_PRESENT | PTE_WRITABLE);
+
+    // verify that the mapping works by accessing the virtual address
+    uint64_t *ptr = (uint64_t *)virt;
+    *ptr = 0x1234567890ABCDEF;  
+
+    uint64_t value = *ptr;
+    if (value == 0x1234567890ABCDEF) {
+        printf("\nVMM test passed: Virtual address maps correctly!\n");
+    } else {
+        printf("\nVMM test failed: Virtual address mapping is incorrect.\n");
+    }
+}
+
+void vmm_test_unmap(void) {
+    uint64_t virt = 0x1000000000;  // a virtual address to map
+    uint64_t phys = 0x200000;     
+
+    map_page(virt, phys, PTE_PRESENT | PTE_WRITABLE);
+
+    //write value
+    uint64_t *ptr = (uint64_t *)virt;
+    *ptr = 0x1234567890ABCDEF; 
+
+    //verifies the value
+    uint64_t value = *ptr; 
+    if (value == 0x1234567890ABCDEF) {
+        printf("VMM test passed: Virtual address mapped and accessed correctly\n");
+    } else {
+        printf("VMM test failed: Virtual address access failed before unmap\n");
+    }
+
+
+//    unmap_page(virt);
+
+    //printf("Attempting to access unmapped page...\n");
+    //ptr = (uint64_t *)virt;
+    //*ptr = 0xDEADBEEF;  // this triggers a page fault. DO NOT UNCOMMENT THIS!!!!
+
+}
+
+
+vmm_test_mapping();
+vmm_test_unmap();
 
     printf("\n=== testing malloc ===\n");
     

@@ -84,17 +84,108 @@ int printf(const char *format, ...) {
             format++;
         }
 
+        // handle length modifiers: l, ll, L
+        int is_long = 0;
+        int is_longlong = 0;
+        if (*format == 'l') {
+            format++;
+            if (*format == 'l') {
+                is_longlong = 1;
+                format++;
+            } else {
+                is_long = 1;
+            }
+        } else if (*format == 'L') {
+            is_longlong = 1;
+            format++;
+        }
+
         c = *format++;
 
         switch (c) {
             case 'd':
             case 'u':
             case 'x':
-            case 'o':
-                itoa(va_arg(args, int), buf,
-                     (c == 'x') ? 16 : (c == 'o') ? 8 : 10);
-                p = buf;
+            case 'o': {
+                if (is_longlong) {
+                    uint64_t val = va_arg(args, uint64_t);
+                    // Manual hex conversion for 64-bit
+                    if (c == 'x') {
+                        cuoreterm_draw_char(global_term, '0', global_fg);
+                        cuoreterm_draw_char(global_term, 'x', global_fg);
+                        chars_written += 2;
+                        char hex_buf[17];
+                        int idx = 0;
+                        if (val == 0) {
+                            hex_buf[idx++] = '0';
+                        } else {
+                            uint64_t temp = val;
+                            int num_digits = 0;
+                            while (temp > 0) {
+                                num_digits++;
+                                temp /= 16;
+                            }
+                            temp = val;
+                            for (int i = num_digits - 1; i >= 0; i--) {
+                                int digit = (temp >> (i * 4)) & 0xF;
+                                hex_buf[idx++] = (digit < 10) ? ('0' + digit) : ('a' + digit - 10);
+                            }
+                        }
+                        hex_buf[idx] = '\0';
+                        p = hex_buf;
+                        // Copy to buffer to preserve it
+                        char *src = hex_buf;
+                        int j = 0;
+                        while (*src && j < 63) {
+                            buf[j++] = *src++;
+                        }
+                        buf[j] = '\0';
+                        p = buf;
+                    } else {
+                        itoa((int)val, buf, (c == 'o') ? 8 : 10);
+                        p = buf;
+                    }
+                } else if (is_long) {
+                    uint64_t val = va_arg(args, long);
+                    if (c == 'x') {
+                        char hex_buf[17];
+                        int idx = 0;
+                        if (val == 0) {
+                            hex_buf[idx++] = '0';
+                        } else {
+                            uint64_t temp = val;
+                            int num_digits = 0;
+                            while (temp > 0) {
+                                num_digits++;
+                                temp /= 16;
+                            }
+                            temp = val;
+                            for (int i = num_digits - 1; i >= 0; i--) {
+                                int digit = (temp >> (i * 4)) & 0xF;
+                                hex_buf[idx++] = (digit < 10) ? ('0' + digit) : ('a' + digit - 10);
+                            }
+                        }
+                        hex_buf[idx] = '\0';
+                        char *src = hex_buf;
+                        int j = 0;
+                        while (*src && j < 63) {
+                            buf[j++] = *src++;
+                        }
+                        buf[j] = '\0';
+                        p = buf;
+                    } else {
+                        itoa((long)val, buf, (c == 'o') ? 8 : 10);
+                        p = buf;
+                    }
+                } else {
+                    if (c == 'x') {
+                    }
+                    itoa(va_arg(args, int), buf,
+                         (c == 'x') ? 16 : (c == 'o') ? 8 : 10);
+                    p = buf;
+                }
                 break;
+            }
 
             case 'f': {
                 double fval = va_arg(args, double);

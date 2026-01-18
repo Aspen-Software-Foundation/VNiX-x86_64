@@ -1,8 +1,8 @@
 /*
     Copyright (C) 2026 Aspen Software Foundation
 
-    Module: pmm.h
-    Description: The physical memory manager for the Ancore Operating System.
+    Module: vmm.h
+    Description: The virtual memory manager for the Ancore Operating System.
     Author: Yazin Tantawi
 
     All components of the Ancore Operating System, except where otherwise noted, 
@@ -36,23 +36,29 @@
  * MA 02110-1301, USA.
 */
 
-#ifndef MEM_PMM_H
-#define MEM_PMM_H
+#ifndef VMM_H
+#define VMM_H
 
 #include <stdint.h>
 
-#define ALIGN_UP(address, alignment) (((address) + (alignment - 1)) & ~((alignment) - 1))
-#define ALIGN_DOWN(address, alignment) ((address) & ~((alignment) - 1))
-#define PAGE_SIZE 4096
+extern volatile struct limine_hhdm_request hhdm_request;
 
-struct PhysicalMemoryRegion
-{
-    uint64_t base;
-    struct PhysicalMemoryRegion *next;
-};
+extern uint64_t hhdm_offset;
 
-void pmm_init(void);
-uint64_t palloc(void);
-void pfree(uint64_t physc_addr);
+void vmm_init(void);
 
-#endif
+#define PTE_PRESENT  (1ULL << 0)
+#define PTE_WRITABLE (1ULL << 1)
+#define PTE_USER     (1ULL << 2)
+#define PTE_NOEXEC   (1ULL << 63)
+
+#define PML4_INDEX(x) (((x) >> 39) & 0x1FF)
+#define PDPT_INDEX(x) (((x) >> 30) & 0x1FF)
+#define PD_INDEX(x)   (((x) >> 21) & 0x1FF)
+#define PT_INDEX(x)   (((x) >> 12) & 0x1FF)
+
+void map_page(uint64_t virt, uint64_t phys, uint64_t flags);
+
+void unmap_page(uint64_t virt);
+
+#endif // VMM_H

@@ -32,10 +32,11 @@ kernel:
 	gcc -ffreestanding -c src/arch/x86_64/isrs_gen.c -o build/isrs_gen.o $(CFLAGS)
 	gcc -ffreestanding -c src/drivers/memory/liballoc/liballoc.c -o build/liballoc.o $(CFLAGS) 
 	gcc -ffreestanding -c src/drivers/memory/liballoc-impl.c -o build/liballoc-impl.o $(CFLAGS)
+	gcc -ffreestanding -c src/drivers/memory/vmm.c -o build/vmm.o $(CFLAGS)
 
 	nasm -f elf64 src/arch/x86_64/isr_stubs.asm -o build/isr_stubs.o
 
-	ld -T linker.ld -nostdlib -static -o build/kernel.elf build/kernel.o build/term.o build/stdio.o build/stdlib.o  build/serial.o  build/io.o build/idt.o build/gdt.o build/pmm.o build/isr.o build/isrs_gen.o build/isr_stubs.o build/string.o build/liballoc.o build/liballoc-impl.o 
+	ld -T linker.ld -nostdlib -static -o build/kernel.elf build/kernel.o build/term.o build/stdio.o build/stdlib.o  build/serial.o  build/io.o build/idt.o build/gdt.o build/pmm.o build/isr.o build/isrs_gen.o build/isr_stubs.o build/string.o build/liballoc.o build/liballoc-impl.o build/vmm.o
 build/uefi.img: kernel 
 	@printf ">>> Creating UEFI bootable image: $@\n"
 

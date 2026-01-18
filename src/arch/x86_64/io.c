@@ -71,7 +71,7 @@ void enable_interrupts(void) {
     }
 }
 
-void disable_interrupts() {
+void disable_interrupts(void) {
     __asm__ volatile ("cli");
     
     if (!are_interrupts_enabled()) {

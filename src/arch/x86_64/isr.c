@@ -53,57 +53,102 @@ void ISR_InitializeGates();
 
 void ISR_Initialize() {
     ISR_InitializeGates();
+
+    ISR_RegisterHandler(14, page_fault_handler); 
+
     for (int i = 0; i < 256; i++) {
-        IDT_EnableGate(i);
+        if (i != 14) {  
+            IDT_EnableGate(i);  
+        }
     }
 
     printf("  [  OK  ] arch/x86_64/isr.c: ISR handlers initialized successfully.\n");
     serial_printf("[  OK  ] arch/x86_64/isr.c: ISR handlers initialized successfully.\n", 70);
 }
 
-void __attribute__((cdecl)) ISR_Handler(Registers_t *regs) {
+
+void ISR_Handler(Registers_t *regs) {
+    printf("\nISR Handler: Handling interrupt %d\n", regs->interrupt);
+    serial_printf("\nISR Handler: Handling interrupt %d\n", regs->interrupt);
+    printf("RIP: %llx\n", regs->rip); 
+    serial_printf("RIP: %llx\n", regs->rip); 
+
     if (g_ISRHandlers[regs->interrupt] != NULL) {
         g_ISRHandlers[regs->interrupt](regs);
-
     } else if (regs->interrupt >= 32) {
+        uint64_t cr2, cr3;
+        asm volatile("mov %%cr2, %0" : "=r"(cr2));
+        asm volatile("mov %%cr3, %0" : "=r"(cr3));
+        
         printf("Unhandled interrupt %d!\n", regs->interrupt);
         serial_printf("Unhandled interrupt %d!\n", regs->interrupt);
+
+        printf("  rax=%llx  rbx=%llx  rcx=%llx  rdx=%llx  rsi=%llx  rdi=%llx\n  r8=%llx  r9=%llx  r10=%llx  r11=%llx  r12=%llx  r13=%llx\n r14=%llx  r15=%llx\n  rsp=%llx  rbp=%llx  rip=%llx  rflags=%llx  cs=%llx  ss=%llx\n cr2=%llx  cr3=%llx\n  interrupt=%llx  errorcode=%llx\n",
+               regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi, regs->r8, regs->r9, regs->r10, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15, regs->rsp, regs->rbp, regs->rip, regs->rflags, regs->cs, regs->ss, cr2, cr3, regs->interrupt, regs->error);
         
-        printf("  eax=%x  ebx=%x  ecx=%x  edx=%x  esi=%x  edi=%x\n",
-               regs->eax, regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi);
-        serial_printf("  eax=%x  ebx=%x  ecx=%x  edx=%x  esi=%x  edi=%x\n",
-               regs->eax, regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi);
+        serial_printf("  rax=%llx  rbx=%llx  rcx=%llx  rdx=%llx  rsi=%llx  rdi=%llx\n  r8=%llx  r9=%llx  r10=%llx  r11=%llx  r12=%llx  r13=%llx\n r14=%llx  r15=%llx\n  rsp=%llx  rbp=%llx  rip=%llx  rflags=%llx  cs=%llx  ss=%llx\n cr2=%llx  cr3=%llx\n  interrupt=%llx  errorcode=%llx\n",
+            regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi, regs->r8, regs->r9, regs->r10, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15, regs->rsp, regs->rbp, regs->rip, regs->rflags, regs->cs, regs->ss, cr2, cr3, regs->interrupt, regs->error);
 
-        printf("  esp=%x  ebp=%x  eip=%x  eflags=%x  cs=%x  ds=%x  ss=%x\n",
-               regs->esp, regs->ebp, regs->eip, regs->eflags, regs->cs, regs->ds, regs->ss);
-        serial_printf("  esp=%x  ebp=%x  eip=%x  eflags=%x  cs=%x  ds=%x  ss=%x\n",
-               regs->esp, regs->ebp, regs->eip, regs->eflags, regs->cs, regs->ds, regs->ss);
-
-        printf("  interrupt=%x  errorcode=%x\n", regs->interrupt, regs->error);
-        serial_printf("  interrupt=%x  errorcode=%x\n", regs->interrupt, regs->error);
- 
     } else {
+        uint64_t cr2, cr3;
+        asm volatile("mov %%cr2, %0" : "=r"(cr2));
+        asm volatile("mov %%cr3, %0" : "=r"(cr3));
+        
         printf("Unhandled exception %d: %s\n", regs->interrupt, g_Exceptions[regs->interrupt]);
         serial_printf("Unhandled exception %d: %s\n", regs->interrupt, g_Exceptions[regs->interrupt]);
+
+        printf("  rax=%llx  rbx=%llx  rcx=%llx  rdx=%llx  rsi=%llx  rdi=%llx\n  r8=%llx  r9=%llx  r10=%llx  r11=%llx  r12=%llx  r13=%llx\n r14=%llx  r15=%llx\n  rsp=%llx  rbp=%llx  rip=%llx  rflags=%llx  cs=%llx  ss=%llx\n cr2=%llx  cr3=%llx\n  interrupt=%llx  errorcode=%llx\n",
+               regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi, regs->r8, regs->r9, regs->r10, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15, regs->rsp, regs->rbp, regs->rip, regs->rflags, regs->cs, regs->ss, cr2, cr3, regs->interrupt, regs->error);
         
-        printf("  eax=%x  ebx=%x  ecx=%x  edx=%x  esi=%x  edi=%x\n",
-               regs->eax, regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi);
-        serial_printf("  eax=%x  ebx=%x  ecx=%x  edx=%x  esi=%x  edi=%x\n",
-                regs->eax, regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi);
-
-        printf("  esp=%x  ebp=%x  eip=%x  eflags=%x  cs=%x  ds=%x  ss=%x\n",
-               regs->esp, regs->ebp, regs->eip, regs->eflags, regs->cs, regs->ds, regs->ss);
-        serial_printf("  esp=%x  ebp=%x  eip=%x  eflags=%x  cs=%x  ds=%x  ss=%x\n",
-                regs->esp, regs->ebp, regs->eip, regs->eflags, regs->cs, regs->ds, regs->ss);
-
-        printf("  interrupt=%x  errorcode=%x\n", regs->interrupt, regs->error);
-        serial_printf("  interrupt=%x  errorcode=%x\n", regs->interrupt, regs->error);
+        serial_printf("  rax=%llx  rbx=%llx  rcx=%llx  rdx=%llx  rsi=%llx  rdi=%llx\n  r8=%llx  r9=%llx  r10=%llx  r11=%llx  r12=%llx  r13=%llx\n r14=%llx  r15=%llx\n  rsp=%llx  rbp=%llx  rip=%llx  rflags=%llx  cs=%llx  ss=%llx\n cr2=%llx  cr3=%llx\n  interrupt=%llx  errorcode=%llx\n",
+            regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi, regs->r8, regs->r9, regs->r10, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15, regs->rsp, regs->rbp, regs->rip, regs->rflags, regs->cs, regs->ss, cr2, cr3, regs->interrupt, regs->error);
 
         printf("KERNEL PANIC!\n");
         serial_write("KERNEL PANIC!\n", 14);
         halt();
     }
 }
+
+
+
+
+void page_fault_handler(Registers_t *regs) {
+    uint64_t cr2, cr3;
+    asm volatile("mov %%cr2, %0" : "=r"(cr2));
+    asm volatile("mov %%cr3, %0" : "=r"(cr3));
+    
+    printf("Page fault triggered!\n");
+    printf("You are most likely trying to access an invalid or non-mapped memory address.\n");
+    printf("Please consult the documentation or external resources for more information on proper memory handling.\n");
+    printf("Error code: %llx\n", regs->error);
+    printf("  Faulting address (CR2): %llx\n", cr2);
+    printf("  Page table base (CR3): %llx\n", cr3);
+
+    serial_printf("Page fault triggered!\n");
+    serial_printf("You are most likely trying to access an invalid or non-mapped memory address.\n");
+    serial_printf("Please consult the documentation or external resources for more information on proper memory handling.\n");
+    serial_printf("Error code: %llx\n", regs->error);
+    serial_printf("  Faulting address (CR2): %llx\n", cr2);
+    serial_printf("  Page table base (CR3): %llx\n", cr3);
+
+        printf("  rax=%llx  rbx=%llx  rcx=%llx  rdx=%llx  rsi=%llx  rdi=%llx\n  r8=%llx  r9=%llx  r10=%llx  r11=%llx  r12=%llx  r13=%llx\n r14=%llx  r15=%llx\n  rsp=%llx  rbp=%llx  rip=%llx  rflags=%llx  cs=%llx  ss=%llx\n cr2=%llx  cr3=%llx\n  interrupt=%llx  errorcode=%llx\n",
+               regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi, regs->r8, regs->r9, regs->r10, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15, regs->rsp, regs->rbp, regs->rip, regs->rflags, regs->cs, regs->ss, cr2, cr3, regs->interrupt, regs->error);
+        
+        serial_printf("  rax=%llx  rbx=%llx  rcx=%llx  rdx=%llx  rsi=%llx  rdi=%llx\n  r8=%llx  r9=%llx  r10=%llx  r11=%llx  r12=%llx  r13=%llx\n r14=%llx  r15=%llx\n  rsp=%llx  rbp=%llx  rip=%llx  rflags=%llx  cs=%llx  ss=%llx\n cr2=%llx  cr3=%llx\n  interrupt=%llx  errorcode=%llx\n",
+            regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi, regs->r8, regs->r9, regs->r10, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15, regs->rsp, regs->rbp, regs->rip, regs->rflags, regs->cs, regs->ss, cr2, cr3, regs->interrupt, regs->error);
+
+
+    if (regs->error & 0x1) {
+        printf("Page fault caused by invalid read operation.\n");
+        serial_write("Page fault caused by invalid read operation.\n", 46);
+    } else {
+        printf("Page fault caused by invalid write operation.\n");
+        serial_write("Page fault caused by invalid write operation.\n", 47);
+    }
+
+    halt();
+}
+
 
 void ISR_RegisterHandler(int interrupt, ISRHandler_t handler) {
     g_ISRHandlers[interrupt] = handler;

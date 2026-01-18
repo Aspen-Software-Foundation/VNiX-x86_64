@@ -111,5 +111,5 @@ void IDT_Initialize() {
         serial_write("[ FAIL ] arch/x86_64/idt.c: Failed to initialize IDT, halting...\n", 68);
         halt(); 
     }
-//to the person that claims everything i make is AI, fuck off you piss baby.
+
 }

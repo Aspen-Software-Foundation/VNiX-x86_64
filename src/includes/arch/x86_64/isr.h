@@ -42,11 +42,11 @@
 #include <stdint.h>
 
 typedef struct {
-    // in the reverse order they are pushed:
-    uint32_t ds;                                            // data segment pushed by us
-    uint32_t edi, esi, ebp, useless, ebx, edx, ecx, eax;    // pusha
-    uint32_t interrupt, error;                              // we push interrupt, error is pushed automatically (or our dummy)
-    uint32_t eip, cs, eflags, esp, ss;                      // pushed automatically by CPU
+    // 64-bit registers pushed in isr_stubs.asm
+    uint64_t rax, rbx, rcx, rdx, rsi, rdi, rbp;
+    uint64_t r8, r9, r10, r11, r12, r13, r14, r15;
+    uint64_t interrupt, error;                              // we push interrupt, error is pushed by CPU
+    uint64_t rip, cs, rflags, rsp, ss;                      // pushed automatically by CPU
 } __attribute__((packed)) Registers_t;
 
 static const char *const g_Exceptions[] = {
@@ -88,4 +88,6 @@ typedef void (*ISRHandler_t)(Registers_t *regs);
 
 void ISR_Initialize();
 void ISR_RegisterHandler(int interrupt, ISRHandler_t handler);
+
+void page_fault_handler(Registers_t *regs);
 #endif // ISR_H
