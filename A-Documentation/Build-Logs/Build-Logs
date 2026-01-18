@@ -12,5 +12,10 @@ Version: dev-prototype
     - Added stdbool
     - Added background image to limine splash screen
     - Renamed memory.h/c to stdlib.h/c and improved it 
-
+    - Added more documentation
+    - Fixed mismatched functions in klibc
+    - Added better OVMF support
+    - Added util.h
+    - Removed stddef.h
+    - Added stdint.h
 More to come soon.

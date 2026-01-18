@@ -37,9 +37,11 @@
 */
 
 
+#include <string.h>
 #include <stdlib.h>
 
-int8_t strncmp(const char *str1, const char *str2, size_t n) {
+
+int strncmp(const char *str1, const char *str2, size_t n) {
     while (n-- > 0) {
         if (*str1 != *str2) {
             return (unsigned char)(*str1) - (unsigned char)(*str2);
@@ -173,4 +175,47 @@ char *strncat(char *dest, const char *src, size_t n)
 
     *d = '\0';
     return dest;
+}
+
+int memcmp_const(const void *ptr1, const uint8_t val, size_t n) {
+    const uint8_t *s1 = (const uint8_t *)ptr1;
+
+    for (size_t i = 0; i < n; i++) {
+        if (s1[i] != val) {
+            return (int8_t)(s1[i] - val);
+        }
+    }
+    return 0;
+}
+
+void *memcpy(void *dest, const void *src, size_t n) {
+    uint8_t *d = (uint8_t *)dest;
+    const uint8_t *s = (const uint8_t *)src;
+    while (n--) {
+        *d++ = *s++;
+    }
+    return dest;
+}
+
+void *memmove(void *dst, const void *src, size_t n) {
+    uint8_t *d = (uint8_t *)dst;
+    const uint8_t *s = (const uint8_t *)src;
+
+    if (d < s) {
+        return memcpy(dst, src, n);
+    }
+
+    for (size_t i = n; i > 0; i--) {
+        d[i - 1] = s[i - 1];
+    }
+
+    return dst;
+}
+
+void *memset(void *ptr, int value, size_t num) {
+    uint8_t *p = (uint8_t *)ptr;
+    while (num--) {
+        *p++ = (uint8_t)value;
+    }
+    return ptr;
 }

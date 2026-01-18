@@ -1,8 +1,8 @@
 /*
     Copyright (C) 2026 Aspen Software Foundation
 
-    Module: memory.h
-    Description: Memory module of the Ancore Operating System.
+    Module: stdlib.h
+    Description: Standard library module of the Ancore Operating System.
     Author: Yazin Tantawi
 
     All components of the Ancore Operating System, except where otherwise noted, 
@@ -35,26 +35,27 @@
  * FOUNDATION, INC., 51 FRANKLIN STREET, FIFTH FLOOR, BOSTON,
  * MA 02110-1301, USA.
 */
+
 #ifndef STDLIB_H
 #define STDLIB_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
+#include "string.h"
+#include "arch/x86_64/gdt.h"
+
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
 
 
-void *memset(void *ptr, int value, size_t num);
-void *memcpy(void *dest, const void *src, size_t n);
-int8_t memcmp(const char *str1, const char *str2, size_t n);
-void *memmove(void *dst, const void *src, size_t n);
-
-void *memset_pattern(void *ptr, const void *pattern, size_t pattern_size, size_t num);
-int8_t memcmp_const(const void *ptr1, const uint8_t val, size_t n);
 void *itoa(int32_t value, char *str, uint32_t base);
 void* malloc(size_t size);
-void free(void* ptr, size_t size);
+void free(void* ptr);
 int atoi(const char* str);
 long atol(const char* str);
 long long atoll(const char* str);
+
 
 long strtol(const char* str, char** endptr, int base);
 unsigned long strtoul(const char* str, char** endptr, int base);

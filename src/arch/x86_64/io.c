@@ -59,7 +59,7 @@ bool are_interrupts_enabled(void) {
     return (flags & (1 << 9)) != 0;  // Bit 9 is IF
 }
 
-void enable_interrupts() {
+void enable_interrupts(void) {
     __asm__ volatile ("sti");
     
     if (are_interrupts_enabled()) {

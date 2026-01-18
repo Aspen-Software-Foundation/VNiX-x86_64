@@ -40,8 +40,9 @@
 // https://github.com/Prankiman/tetrisOS/blob/master/LICENSE
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
-#include "stdbool.h"
+
 #define ALIGN_UP(x, a) (((x) + (uintptr_t)((a)-1)) & ~((uintptr_t)((a)-1)))
 
 uint8_t* heap_ptr = (uint8_t*)0x100000;  
@@ -101,13 +102,6 @@ char *itoa(int32_t value, char *str, uint32_t base) {
     return str;
 }
 
-void *memset(void *ptr, int value, size_t num) {
-    uint8_t *p = (uint8_t *)ptr;
-    while (num--) {
-        *p++ = (uint8_t)value;
-    }
-    return ptr;
-}
 
 void exit(int status) {
 
@@ -115,41 +109,6 @@ void exit(int status) {
     while(1) halt();
 }
 
-void *memcpy(void *dest, const void *src, size_t n) {
-    uint8_t *d = (uint8_t *)dest;
-    const uint8_t *s = (const uint8_t *)src;
-    while (n--) {
-        *d++ = *s++;
-    }
-    return dest;
-}
-
-int8_t memcmp(const void *ptr1, const void *ptr2, size_t n) {
-    const uint8_t *s1 = (const uint8_t *)ptr1;
-    const uint8_t *s2 = (const uint8_t *)ptr2;
-
-    for (size_t i = 0; i < n; i++) {
-        if (s1[i] != s2[i]) {
-            return (int8_t)(s1[i] - s2[i]);
-        }
-    }
-    return 0;
-}
-
-void *memmove(void *dst, const void *src, size_t n) {
-    uint8_t *d = (uint8_t *)dst;
-    const uint8_t *s = (const uint8_t *)src;
-
-    if (d < s) {
-        return memcpy(dst, src, n);
-    }
-
-    for (size_t i = n; i > 0; i--) {
-        d[i - 1] = s[i - 1];
-    }
-
-    return dst;
-}
 
 //Author: Jerry Jhird
 //Source: https://codeberg.org/jerryjhird/CuoreOS/src/branch/master/src/libc/memory.c
@@ -177,26 +136,17 @@ void* malloc(size_t size) {
     return (void*)ptr;
 }
 
-void free(void* ptr, size_t size) {
-    // free the last allocated block
+void free(void* ptr) {
     uintptr_t block = (uintptr_t)ptr;
-    if (block + size == (uintptr_t)heap_ptr) {
-        heap_ptr = (uint8_t*)block; // rewind heap pointer
+    
+    if (block == (uintptr_t)heap_ptr) {
+        // Simple free implementation: only frees if it's the last allocated block
+        // This is a stub implementation
     }
 }
 //End Code Attribution
 
 
-int8_t memcmp_const(const void *ptr1, const uint8_t val, size_t n) {
-    const uint8_t *s1 = (const uint8_t *)ptr1;
-
-    for (size_t i = 0; i < n; i++) {
-        if (s1[i] != val) {
-            return (int8_t)(s1[i] - val);
-        }
-    }
-    return 0;
-}
 
 
 void* calloc(size_t num, size_t size) {

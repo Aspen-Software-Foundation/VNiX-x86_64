@@ -66,7 +66,7 @@ static const char *const g_Exceptions[] = {
     "General Protection Fault",
     "Page Fault",
     "",
-    "x87 Floating-Point Exception",
+    "x86 Floating-Point Exception",
     "Alignment Check",
     "Machine Check",
     "SIMD Floating-Point Exception",
