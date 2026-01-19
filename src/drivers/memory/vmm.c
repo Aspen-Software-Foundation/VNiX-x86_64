@@ -44,6 +44,14 @@
 #include <stdio.h>
 #include "includes/util/serial.h"
 
+typedef enum result_t {
+    OK
+} result_t;
+
+const char* result_str[] = {
+  [OK] = "[  OK  ]"
+};
+
 extern volatile struct limine_hhdm_request hhdm_request;
 
 uint64_t hhdm_offset;

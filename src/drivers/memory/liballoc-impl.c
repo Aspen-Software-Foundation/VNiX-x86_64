@@ -37,12 +37,10 @@
 */
 
 #include "includes/memory/pmm.h"
+#include "includes/memory/vmm.h"
 #include "arch/limine.h"
 #include <stddef.h>
 #include <stdio.h>
-
-// hhdm_request is defined in pmm.c, we'll access it through extern
-extern volatile struct limine_hhdm_request hhdm_request;
 
 int liballoc_lock() {
     // TODO: implement spinlock when we have SMP/multithreading
@@ -56,60 +54,56 @@ int liballoc_unlock() {
     return 0;
 }
 
-// allocate 'pages' number of physical pages
-// returns a virtual address in the higher half direct map (HHDM)
+// maps them as virtual addresses then returns the physical address
 void* liballoc_alloc(int pages) {
     if (pages <= 0) return NULL;
     
-    struct limine_hhdm_response *hhdm_response = hhdm_request.response;
-    if (!hhdm_response) {
-        printf("ERROR: HHDM response is NULL!\n");
-        return NULL;
-    }
-    
-    // allocate physical pages (not necessarily contiguous, but that's OK for liballoc)
-    uint64_t first_page = palloc();
-    if (first_page == 0) {
+    // allocate first physical page
+    uint64_t first_phys = palloc();
+    if (first_phys == 0) {
         printf("ERROR: palloc failed on first page!\n");
+        serial_write("ERROR: palloc failed on first page!\n", 38);
         return NULL;
     }
     
-    // allocate remaining pages
+    // then allocate the rest
     for (int i = 1; i < pages; i++) {
-        uint64_t page = palloc();
-        if (page == 0) {
+        uint64_t phys = palloc();
+        if (phys == 0) {
             printf("ERROR: palloc failed at page %d of %d\n", i, pages);
-            // if out of memory, free what we allocated
+            serial_printf("ERROR: palloc failed at page %d of %d\n", i, pages);
+
             for (int j = 0; j < i; j++) {
-                pfree(first_page + (j * 0x1000));
+                pfree(first_phys + (j * 0x1000));
             }
             return NULL;
         }
     }
     
-    // convert to virtual address in HHDM and return
-    void* virt_addr = (void*)(first_page + hhdm_response->offset);
-    printf("liballoc_alloc: allocated %d pages, phys=%p, virt=%p\n", pages, (void*)first_page, virt_addr);
-    return virt_addr;
+    // map all pages into virtual address space
+    uint64_t virt = first_phys + hhdm_offset;
+    for (int i = 0; i < pages; i++) {
+        map_page(virt + (i * 0x1000), first_phys + (i * 0x1000), 
+                 PTE_WRITABLE);
+    }
+    
+    printf("liballoc_alloc: allocated %d pages, phys=%p, virt=%p\n", pages, (void*)first_phys, (void*)virt);
+    serial_printf("liballoc_alloc: allocated %d pages, phys=%p, virt=%p\n", pages, (void*)first_phys, (void*)virt);
+    return (void*)virt;
 }
 
 // free 'pages' number of pages starting at ptr
 int liballoc_free(void* ptr, int pages) {
     if (!ptr || pages <= 0) return -1;
     
-    struct limine_hhdm_response *hhdm_response = hhdm_request.response;
-    if (!hhdm_response) {
-        printf("ERROR: HHDM response is NULL in liballoc_free!\n");
-        return -1;
-    }
-    
     // convert virtual address back to physical
-    uint64_t phys_addr = (uint64_t)ptr - hhdm_response->offset;
+    uint64_t phys_addr = (uint64_t)ptr - hhdm_offset;
     
     printf("liballoc_free: freeing %d pages, virt=%p, phys=%p\n", pages, ptr, (void*)phys_addr);
-    
-    // Free each page
+    serial_printf("liballoc_free: freeing %d pages, virt=%p, phys=%p\n", pages, ptr, (void*)phys_addr);
+    // unmap and free each page
     for (int i = 0; i < pages; i++) {
+        unmap_page((uint64_t)ptr + (i * 0x1000));
         pfree(phys_addr + (i * 0x1000));
     }
     

@@ -95,8 +95,8 @@ void kernel_main(void) {
     ISR_Initialize();
 
     void vmm_test_mapping(void) {
-    uint64_t virt = 0x1000000000;  // example virtual address
-    uint64_t phys = 0x200000;      // example physical address
+    uint64_t virt = 0x1000000000;  // idfk virtual address
+    uint64_t phys = 0x200000;      // idfk physical address
 
 
     map_page(virt, phys, PTE_PRESENT | PTE_WRITABLE);
@@ -108,8 +108,10 @@ void kernel_main(void) {
     uint64_t value = *ptr;
     if (value == 0x1234567890ABCDEF) {
         printf("\nVMM test passed: Virtual address maps correctly!\n");
+        serial_write("\nVMM test passed: Virtual address maps correctly!\n", 48);
     } else {
         printf("\nVMM test failed: Virtual address mapping is incorrect.\n");
+        serial_write("\nVMM test failed: Virtual address mapping is incorrect.\n", 57);
     }
 }
 
@@ -127,12 +129,13 @@ void vmm_test_unmap(void) {
     uint64_t value = *ptr; 
     if (value == 0x1234567890ABCDEF) {
         printf("VMM test passed: Virtual address mapped and accessed correctly\n");
+        serial_write("VMM test passed: Virtual address mapped and accessed correctly\n", 63);
     } else {
         printf("VMM test failed: Virtual address access failed before unmap\n");
+        serial_write("VMM test failed: Virtual address access failed before unmap\n", 63);
     }
 
-
-//    unmap_page(virt);
+unmap_page(virt);
 
     //printf("Attempting to access unmapped page...\n");
     //ptr = (uint64_t *)virt;
@@ -145,17 +148,22 @@ vmm_test_mapping();
 vmm_test_unmap();
 
     printf("\n=== testing malloc ===\n");
+    serial_write("\n=== testing malloc ===\n", 24);
     
     // test 1: malloc
     char* test1 = malloc(100);
     if (test1 != NULL) {
         printf("malloc(100) succeeded: %p\n", test1);
+        serial_printf("malloc(100) succeeded: %p\n", test1);
         strcpy(test1, "Hello from malloc!");
         printf("String in malloc'd memory: %s\n", test1);
+        serial_printf("String in malloc'd memory: %s\n", test1);
         free(test1);
         printf("free() completed\n");
+        serial_write("free() completed\n", 16);
     } else {
         printf("malloc(100) failed!\n");
+        serial_write("malloc(100) failed!\n", 20);
     }
     
     // test 2: multiple allocations
@@ -165,32 +173,41 @@ vmm_test_unmap();
     
     if (numbers && string && big) {
         printf("Multiple allocations succeeded\n");
+        serial_write("Multiple allocations succeeded\n", 33);
         
         for (int i = 0; i < 10; i++) {
             numbers[i] = i * 10;
         }
         printf(" Array: [%d, %d, %d, %d, %d]\n", 
                 numbers[0], numbers[1], numbers[2], numbers[3], numbers[4]);
+        serial_printf(" Array: [%d, %d, %d, %d, %d]\n", 
+                numbers[0], numbers[1], numbers[2], numbers[3], numbers[4]);
         
         free(numbers);
         free(string);
         free(big);
         printf(" Freed all allocations\n");
+        serial_write(" Freed all allocations\n", 24);
     } else {
         printf(" Multiple allocations failed\n");
+        serial_write(" Multiple allocations failed\n", 30);
     }
     
     // test 3: calloc
     int* zeros = calloc(5, sizeof(int));
     if (zeros) {
         printf(" calloc succeeded\n");
+        serial_write(" calloc succeeded\n", 18);
         printf(" Values: [%d, %d, %d, %d, %d]\n", 
+                zeros[0], zeros[1], zeros[2], zeros[3], zeros[4]);
+        serial_printf(" Values: [%d, %d, %d, %d, %d]\n",
                 zeros[0], zeros[1], zeros[2], zeros[3], zeros[4]);
         free(zeros);
     }
     
     
     printf("=== malloc tests complete ===\n\n");
+    serial_write("=== malloc tests complete ===\n\n", 33);
 
 
     while (1);
