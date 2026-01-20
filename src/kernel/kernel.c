@@ -139,8 +139,8 @@ void vmm_test_unmap(void) {
 unmap_page(virt);
 
     //printf("Attempting to access unmapped page...\n");
-    ptr = (uint64_t *)virt;
-    *ptr = 0xDEADBEEF;  // this triggers a page fault. DO NOT UNCOMMENT THIS!!!!
+    //ptr = (uint64_t *)virt;
+    //*ptr = 0xDEADBEEF;  // this triggers a page fault. DO NOT UNCOMMENT THIS!!!!
 
 }
 
