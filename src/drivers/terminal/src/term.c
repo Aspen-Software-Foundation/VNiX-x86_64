@@ -3,7 +3,7 @@
     Description: A simple framebuffer terminal driver for CuoreOS.
     Author: Jerry Jhird (jerryjhird-public@proton.me)
     Source: https://github.com/jerryjhird/Cuoreterm
-    License: MPLv2.0 License
+    License: MPLv2.0 License, relicensed to GPLv2 or later for Ancore OS use.
 
 */
 

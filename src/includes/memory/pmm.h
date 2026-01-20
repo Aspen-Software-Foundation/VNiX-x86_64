@@ -54,5 +54,8 @@ struct PhysicalMemoryRegion
 void pmm_init(void);
 uint64_t palloc(void);
 void pfree(uint64_t physc_addr);
+uint64_t pmm_get_total_pages(void);
+uint64_t pmm_get_free_pages(void);
+uint64_t pmm_get_used_pages(void);
 
 #endif

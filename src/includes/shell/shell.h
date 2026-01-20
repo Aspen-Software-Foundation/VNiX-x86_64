@@ -1,9 +1,9 @@
 /*
     Copyright (C) 2026 Aspen Software Foundation
 
-    Module: math.h
-    Description: Math module for the Ancore Operating System.
-    Author: Mejd Almohammedi
+    Module: shell.h
+    Description: Shell module for the Ancore Operating System.
+    Author: Yazin Tantawi
 
     All components of the Ancore Operating System, except where otherwise noted, 
     are copyright of the Aspen Software Foundation (and the corresponding author(s)) and licensed under GPLv2 or later.
@@ -37,66 +37,9 @@
 */
 
 
-#ifndef MATH_H
-#define MATH_H
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include "includes/util/util.h"
+#ifndef SHELL_H
+#define SHELL_H
 
-#define E 2.71828
-#define PI 3.14159265358979323846264338327950
+void shell_main(void); //somehow the most important file in the shell triangle
 
-
-static inline uint32_t abs32(int32_t x) {
-    return x < 0 ? -x : x;
-}
-
-static inline uint16_t abs16(int16_t x) {
-    return x < 0 ? -x : x;
-}
-
-static inline uint8_t abs8(int8_t x) {
-    return x < 0 ? -x : x;
-}
-
-// Helper functions for min and max.
-static inline uint32_t min32(int a, int b) {
-    return (a < b) ? a : b;
-}
-static inline uint32_t max32(int a, int b) {
-    return (a > b) ? a : b;
-}
-
-static inline uint32_t log2u(uint32_t number) {
-    uint32_t num=number, counter=0;
-    for (; num!=1; counter++) {
-        num >>= 1;
-    }
-    return counter;
-}
-
-uint32_t roundf(float number);
-double fabs(double x);
-double fmod(double x, double y);
-float fmodf(float x, float y);
-double sin(double x);
-double cos(double x);
-float sinf(float x);
-float cosf(float x);
-double tan(double x);
-float tanf(float x);
-double pow(double x, double y);
-
-// Compute the x coordinate where the horizontal line at y intersects the edge (a, b).
-static inline int compute_intersection_x(uint16_Vector2_t a, uint16_Vector2_t b, int y) {
-    if (a.y == b.y)
-        return a.x; // Horizontal edge - return one endpoint.
-    float t = (float)(y - a.y) / (float)(b.y - a.y);
-    return a.x + (int)((b.x - a.x) * t);
-}
-
-uint64_t __udivdi3(uint64_t n, uint32_t d);
-uint64_t __umoddi3(uint64_t n, uint32_t d);
-
-#endif // MATH_H
+#endif

@@ -16,7 +16,7 @@ void log_to_terminal(result_t status, const char *from, const char *file, int li
     const char *color = get_status_color(status);
     while (*color) *ptr++ = *color++;
     
-    // This i so i dont forget: this is how spacing is introduced:
+    //this i so i dont forget: this is how spacing is introduced:
     *ptr++ = '[';
     *ptr++ = ' ';
     *ptr++ = ' ';

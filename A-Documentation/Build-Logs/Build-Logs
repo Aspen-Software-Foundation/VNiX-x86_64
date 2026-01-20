@@ -30,5 +30,7 @@ Version: dev-prototype
     - Improved Makefile
     - Added APIC and PIC drivers
     - Added math 
-    
+    - Added shell and keyboard drivers
+    - Improved PMM to display free, used, and total
+    - Small tweaks to klibc
     More to come soon.

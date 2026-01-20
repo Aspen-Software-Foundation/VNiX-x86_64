@@ -42,6 +42,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+
 static struct terminal *global_term = NULL;
 static uint32_t global_fg = 0xFFFFFF;
 

@@ -42,6 +42,10 @@
 #include <stdio.h>
 #include "includes/util/log-info.h"
 
+static uint64_t pmm_total_pages = 0;
+static uint64_t pmm_free_pages  = 0;
+
+
 struct PhysicalMemoryRegion *free_mem_head = NULL;
 
 __attribute__((used, section(".limine_requests")))
@@ -78,6 +82,8 @@ struct limine_memmap_entry **entries = response->entries;
                 region->base = current;
                 region->next = free_mem_head;
                 free_mem_head = region;
+                pmm_total_pages++;
+                pmm_free_pages++;
             }
         }
     }
@@ -92,7 +98,7 @@ uint64_t palloc(void)
     
     struct PhysicalMemoryRegion *region = free_mem_head;
     free_mem_head = free_mem_head->next;
-    
+    pmm_free_pages--;
     return region->base;
 }
 
@@ -104,4 +110,20 @@ void pfree(uint64_t physc_addr)
     region->next = free_mem_head;
     region->base = physc_addr;
     free_mem_head = region;
+    pmm_free_pages++;
+}
+
+uint64_t pmm_get_total_pages(void)
+{
+    return pmm_total_pages;
+}
+
+uint64_t pmm_get_free_pages(void)
+{
+    return pmm_free_pages;
+}
+
+uint64_t pmm_get_used_pages(void)
+{
+    return pmm_total_pages - pmm_free_pages;
 }

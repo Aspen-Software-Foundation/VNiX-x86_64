@@ -37,9 +37,9 @@
 CFLAGS := -I src/ -ffreestanding -Wall -Wextra -Wunused-parameter -static -nostartfiles -nostdlib -fno-pie -no-pie -mno-red-zone -mcmodel=large -T linker.ld -I src/includes/ -I src/includes/klibc/ -I src/drivers/memory/liballoc/ -D_ALLOC_SKIP_DEFINE
 LDFLAGS := -nostdlib -static -z noexecstack
 QEMU_CPU ?=
-QEMU_MEM ?= -m 2G
+QEMU_MEM ?= -m 1G
 
-all: clean kernel build/uefi-usb.img run
+all: clean kernel build/uefi-usb.img 
 
 kernel:
 	mkdir -p build
@@ -65,6 +65,8 @@ kernel:
 	gcc -ffreestanding -c src/drivers/pic/pic_irq.c -o build/pic_irq.o $(CFLAGS)
 	gcc -ffreestanding -c src/drivers/apic/apic.c -o build/apic.o $(CFLAGS)
 	gcc -ffreestanding -c src/drivers/apic/apic_irq.c -o build/apic_irq.o $(CFLAGS)
+	gcc -ffreestanding -c src/drivers/shell/keyboard.c -o build/keyboard.o $(CFLAGS)
+	gcc -ffreestanding -c src/drivers/shell/shell.c -o build/shell.o $(CFLAGS)
 	nasm -f elf64 src/arch/x86_64/isr_stubs.asm -o build/isr_stubs.o
 
 # After much research, i've concluded on this linking order because it looks much better than the hellish alternative i initially had
@@ -90,7 +92,9 @@ kernel:
 		build/pic.o \
 		build/pic_irq.o \
 		build/apic.o \
-		build/apic_irq.o
+		build/apic_irq.o \
+		build/keyboard.o \
+		build/shell.o
 	objcopy --strip-debug build/kernel.elf
 
 
@@ -131,6 +135,8 @@ build/uefi-usb.img: kernel
 	@echo "2. Disable Secure Boot"
 	@echo "3. Set USB as first boot device "
 	@echo "   (or press F9 for the boot menu if your machine supports it)"
+	@echo ""
+	@echo "Alternatively, you can run 'make run' to test the UEFI raw image."
 	@echo "================================================"
 	@echo "Note: this image will NOT work for Non-UEFI/Legacy BIOS systems."
 	@echo ""

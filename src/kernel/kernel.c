@@ -51,6 +51,9 @@
 #include "includes/util/log-info.h"
 #include "includes/apic/apic.h"
 #include "includes/apic/apic_irq.h"
+#include "includes/shell/keyboard.h"
+#include "includes/shell/shell.h"
+
 
 static volatile struct limine_framebuffer_request fb_req = {
     .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
@@ -58,6 +61,29 @@ static volatile struct limine_framebuffer_request fb_req = {
 };
 
 struct terminal fb_term;
+
+/*
+uint32_t crc32c_swhash(const char *s)
+{
+    const uint32_t poly = 0x82F63B78;
+    uint32_t crc = 0;
+
+    while (*s) {
+        uint32_t c = (uint8_t)*s++;
+        crc ^= c;
+
+        for (int i = 0; i < 8; i++) {
+            crc = (crc >> 1) ^ (poly & -(crc & 1));
+        }
+    }
+
+    return crc;
+}
+
+dont mind this guys
+
+*/ 
+
 
 void kernel_main(void) {
     struct limine_framebuffer *fb = fb_req.response->framebuffers[0];
@@ -154,12 +180,6 @@ vmm_test_mapping();
 vmm_test_unmap();
 
 
-printf("\n=== Starting color tests ===\n");
-LOG(Ok, kernel_main, "Success\n");
-LOG(Warn, kernel_main, "Warning\n");
-LOG(Error, kernel_main, "Error\n");
-LOG(Fatal, kernel_main, "Fatal Error\n");
-
 
     printf("\n=== testing malloc ===\n");
     serial_write("\n=== testing malloc ===\n", 24);
@@ -219,10 +239,11 @@ LOG(Fatal, kernel_main, "Fatal Error\n");
         free(zeros);
     }
     
-    
+
     printf("=== malloc tests complete ===\n\n");
     serial_write("=== malloc tests complete ===\n\n", 33);
-
+    shell_main();
 
     while (1);
+    
 }

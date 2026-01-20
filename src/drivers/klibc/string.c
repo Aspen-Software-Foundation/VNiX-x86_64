@@ -63,6 +63,14 @@ size_t strlen(const char *str) {
     return l;
 }
 
+int strcmp(const char *str1, const char *str2) {
+    while (*str1 && (*str1 == *str2)) {
+        str1++;
+        str2++;
+    }
+    return (unsigned char)(*str1) - (unsigned char)(*str2);
+}
+
 // SEE: https://opensource.apple.com/source/Libc/Libc-1158.30.7/string/strlcat.c.auto.html
 size_t strlcat(char *dst, const char *src, size_t size) {
     const size_t sl = strlen(src),

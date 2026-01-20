@@ -1,12 +1,7 @@
 // Author: Jerry Jhird
 // Source: https://codeberg.org/jerryjhird/CuoreOS
-// License: MPLv2.0
+// License: MPLv2.0 License, relicensed to GPLv2 or later for Ancore OS use.
 
-/*
-This Source Code Form is subject to the terms of the Mozilla Public License, version 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at 
-https://mozilla.org/MPL/2.0/.
-*/
 
 #include "includes/arch/x86_64/io.h"
 #include "includes/klibc/string.h"
@@ -32,15 +27,15 @@ static void serial_wait_tx(void) {
     while (!(inb(SERIAL_COM1 + 5) & 0x20)) {}
 }
 
-static void serial_putc(char c) {
+void putc(char c) {
     serial_wait_tx();
     outb(SERIAL_COM1, (uint8_t)c);
 }
 
 void serial_write(const char *msg) {
     for (size_t i = 0; i < strlen(msg); i++) {
-        if (msg[i] == '\n') serial_putc('\r');
-        serial_putc(msg[i]);
+        if (msg[i] == '\n') putc('\r');
+        putc(msg[i]);
     }
 }
 
@@ -51,7 +46,7 @@ static void serial_print_hex(uint64_t num, int width) {
     int i = 0;
     
     if (num == 0) {
-        serial_putc('0');
+        putc('0');
         return;
     }
     
@@ -65,19 +60,19 @@ static void serial_print_hex(uint64_t num, int width) {
     }
     
     while (i > 0) {
-        serial_putc(buffer[--i]);
+        putc(buffer[--i]);
     }
 }
 
 
 static void serial_print_dec(int64_t num) {
     if (num < 0) {
-        serial_putc('-');
+        putc('-');
         num = -num;
     }
     
     if (num == 0) {
-        serial_putc('0');
+        putc('0');
         return;
     }
     
@@ -90,7 +85,7 @@ static void serial_print_dec(int64_t num) {
     }
     
     while (i > 0) {
-        serial_putc(buffer[--i]);
+        putc(buffer[--i]);
     }
 }
 
@@ -167,21 +162,21 @@ void serial_printf(const char *fmt, ...) {
                     break;
                     
                 case 'c': 
-                    serial_putc((char)va_arg(args, int));
+                    putc((char)va_arg(args, int));
                     break;
                     
                 case '%': 
-                    serial_putc('%');
+                    putc('%');
                     break;
                     
                 default:
-                    serial_putc('%');
-                    serial_putc(*p);
+                    putc('%');
+                    putc(*p);
                     break;
             }
         } else {
-            if (*p == '\n') serial_putc('\r');
-            serial_putc(*p);
+            if (*p == '\n') putc('\r');
+            putc(*p);
         }
     }
     

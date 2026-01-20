@@ -16,10 +16,11 @@ extern "C" {
 #endif
 #include <stddef.h>
 #include <stdint.h>
+#define SERIAL_COM1  0x3F8 
 
 void serial_init(void);
 void serial_write(const char *format, ...);
-void serial_putc(char c);
+void putc(char c);
 void serial_printf(const char *fmt, ...);
 
 #ifdef __cplusplus
