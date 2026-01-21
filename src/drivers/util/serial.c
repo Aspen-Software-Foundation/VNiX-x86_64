@@ -1,6 +1,6 @@
 // Author: Jerry Jhird
 // Source: https://codeberg.org/jerryjhird/CuoreOS
-// License: MPLv2.0 License, relicensed to GPLv2 or later for Ancore OS use.
+// License: MPLv2.0 License, relicensed to GPLv2 or later for VNiX OS use.
 
 
 #include "includes/arch/x86_64/io.h"

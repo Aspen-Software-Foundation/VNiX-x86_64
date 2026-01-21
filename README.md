@@ -1,12 +1,12 @@
-# Ancore Operating System (ancoreOS) 
+# VNiX Operating System (VNiX) 
 
-Created by the Aspen Software Foundation, the Ancore Operating System is a new OS that's main goal is to run multiple executable types, such as Microsoft Windows's EXE file type, and Linux's ELF file type, 
+Created by the Aspen Software Foundation, the VNiX Operating System is a new OS that's main goal is to run multiple executable types, such as Microsoft Windows's EXE file type, and Linux's ELF file type, 
 therefore fixing the issue of having to dualboot Windows and Linux.
 
 This operating system uses a modular build system made in the GNU Makefile Language, a fast and complex build language made specifically for large projects. More information can be found here: https://www.gnu.org/software/make/
 
-Currently, the Ancore Operating System uses Cuoreterm for its terminal. Cuoreterm is a super lightweight and freestanding terminal made by JerryJhird for CuoreOS. 
-Ancore also features RISCV32 program support, made by Dcraftbg. For more information about either one of these projects, visit the links at the bottom of this README.md.
+Currently, the VNiX Operating System uses Cuoreterm for its terminal. Cuoreterm is a super lightweight and freestanding terminal made by JerryJhird for CuoreOS. 
+VNiX also features RISCV32 program support, made by Dcraftbg. For more information about either one of these projects, visit the links at the bottom of this README.md.
 This OS also features the Limine Bootloader, because of its extensive features and ease of use. I personally support its goals and achievements, which is why i've included it in this project.
 
 ---
@@ -31,7 +31,7 @@ Note: The method of installing these packages may differ by distribution and ope
 
 ## Directory Structure:
 
-This is the average root directory for ancoreOS on the user side
+This is the average root directory for VNiX on the user side
 
   ```
 root-dir:
@@ -53,7 +53,7 @@ root-dir:
 ├── Assets
 │   └── wallpaper4k.png
 ├── build
-│   ├── ancoreOS-uefi_dev-prototype.img
+│   ├── VNiX-uefi_dev-prototype.img
 │   ├── gdt.o
 │   ├── idt.o
 │   ├── io.o

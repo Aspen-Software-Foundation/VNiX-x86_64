@@ -6,7 +6,7 @@ Preface:
 
 1 - Introduction
 
-    The Ancore Operating System (ancoreOS) is a Unix-Like OS that is being developed by the Aspen Software Foundation for a specific purpose
+    The VNiX Operating System (VNiX) is a Unix-Like OS that is being developed by the Aspen Software Foundation for a specific purpose
     This purpose is to run multiple executable files in the same operating system without having to dual boot. The main executable
     types that this OS plans to run are the Microsoft Windows' EXE type, and Linux's ELF type. 
 
@@ -20,8 +20,8 @@ Preface:
 
 3 - Core features
 
-    Currently, the Ancore Operating System uses Cuoreterm for its terminal. Cuoreterm is a super lightweight and freestanding terminal made by JerryJhird for CuoreOS. 
-    Ancore also features RISCV32 program support, made by Dcraftbg. For more information about either one of these project, visit the links below:
+    Currently, the VNiX Operating System uses Cuoreterm for its terminal. Cuoreterm is a super lightweight and freestanding terminal made by JerryJhird for CuoreOS. 
+    VNiX also features RISCV32 program support, made by Dcraftbg. For more information about either one of these project, visit the links below:
     This OS also features the Limine Bootloader, because of its extensive features and ease of use. I personally support its goals and achievements, which is why
     I've included it in this project.
 

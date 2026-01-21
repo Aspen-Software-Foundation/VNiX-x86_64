@@ -1,6 +1,6 @@
 // Author: Jerry Jhird
 // Project: CuoreOS
-// License: MPLv2.0, relicensed under GPLv2 for ancoreOS
+// License: MPLv2.0, relicensed under GPLv2 for VNiX
 
 #ifndef KEYBOARD_H
 #define KEYBOARD_H

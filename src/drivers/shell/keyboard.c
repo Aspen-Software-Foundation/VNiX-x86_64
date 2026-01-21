@@ -1,6 +1,6 @@
 // Author: Jerry Jhird
 // Project: CuoreOS
-// License: MPLv2.0, relicensed for ancoreOS under GPLv2
+// License: MPLv2.0, relicensed for VNiX under GPLv2
 
 #include "includes/arch/x86_64/io.h"
 #include "includes/shell/keyboard.h"

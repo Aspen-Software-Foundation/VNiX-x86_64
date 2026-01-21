@@ -2,10 +2,10 @@
     Copyright (C) 2026 Aspen Software Foundation
 
     Module: shell.c
-    Description: Shell module for the Ancore Operating System.
+    Description: Shell module for the VNiX Operating System.
     Author: Yazin Tantawi
 
-    All components of the Ancore Operating System, except where otherwise noted, 
+    All components of the VNiX Operating System, except where otherwise noted, 
     are copyright of the Aspen Software Foundation (and the corresponding author(s)) and licensed under GPLv2 or later.
     For more information on the Gnu Public License Version 2, please refer to the LICENSE file
     or to the link provided here: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
@@ -83,9 +83,10 @@ void pmmstats(void){
     uint64_t free  = pmm_get_free_pages();
     uint64_t used  = pmm_get_used_pages();
         printf("PMM stats:\n");
-printf("  Total pages: %llu (%llu MB)\n", total, (total * PAGE_SIZE) / (1024 * 1024));
-printf("  Free pages : %llu (%llu MB)\n", free,  (free  * PAGE_SIZE) / (1024 * 1024));
-printf("  Used pages : %llu (%llu MB)\n", used,  (used  * PAGE_SIZE) / (1024 * 1024));
+printf("  Total pages: %llu pages (%llu MB)\n", total, (total * PAGE_SIZE) / (1024 * 1024));
+printf("  Free pages : %llu pages (%llu MB)\n", free,  (free  * PAGE_SIZE) / (1024 * 1024));
+printf("  Used pages : %llu pages (%llu MB)\n", used,  (used  * PAGE_SIZE) / (1024 * 1024));
+printf("  Page size  : %llu KB\n", PAGE_SIZE);
 }
 
 
@@ -139,11 +140,11 @@ void shell_main(void) {
     int pos;
     char c;
     
-    printf("ancoreOS Interactive Shell v1.0\n");
+    printf("VNiX Interactive Shell v1.0\n");
     printf("Type 'help' for commands\n\n");
     
     while (1) {
-        printf("ancoreOS@root:$> ");
+        printf("vnix@root:$> ");
         
         pos = 0;
         while (1) {

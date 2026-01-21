@@ -1,10 +1,10 @@
 # Copyright (C) 2026 Aspen Software Foundation
 
 # 	Module: Makefile	
-# 	Description: The Makefile for the Ancore Operating System.
+# 	Description: The Makefile for the VNiX Operating System.
 # 	Author: Yazin Tantawi (and Jerry Jhird)
 
-# 	All components of the Ancore Operating System, except where otherwise noted,
+# 	All components of the VNiX Operating System, except where otherwise noted,
 # 	are copyright of the Aspen Software Foundation (and the corresponding author(s)) and licensed under GPLv2 or later.
 # 	For more information on the GNU Public License Version 2, please refer to the LICENSE file 
 # 	or to the link provided here: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
@@ -63,8 +63,8 @@ kernel:
 	gcc -ffreestanding -c src/drivers/util/math.c -o build/math.o $(CFLAGS)
 	gcc -ffreestanding -c src/drivers/pic/pic.c -o build/pic.o $(CFLAGS)
 	gcc -ffreestanding -c src/drivers/pic/pic_irq.c -o build/pic_irq.o $(CFLAGS)
-	gcc -ffreestanding -c src/drivers/apic/apic.c -o build/apic.o $(CFLAGS)
-	gcc -ffreestanding -c src/drivers/apic/apic_irq.c -o build/apic_irq.o $(CFLAGS)
+	gcc -ffreestanding -c src/drivers/pic/apic/apic.c -o build/apic.o $(CFLAGS)
+	gcc -ffreestanding -c src/drivers/pic/apic/apic_irq.c -o build/apic_irq.o $(CFLAGS)
 	gcc -ffreestanding -c src/drivers/shell/keyboard.c -o build/keyboard.o $(CFLAGS)
 	gcc -ffreestanding -c src/drivers/shell/shell.c -o build/shell.o $(CFLAGS)
 	nasm -f elf64 src/arch/x86_64/isr_stubs.asm -o build/isr_stubs.o
@@ -114,17 +114,17 @@ build/uefi-usb.img: kernel
 	echo "BOOTX64.EFI" >> build/usb_root/startup.nsh
 	
 	@echo "Creating FAT32 image..."
-	dd if=/dev/zero of=build/ancoreOS-uefi_dev-prototype.img bs=1M count=64
-	mkfs.fat -F 32 build/ancoreOS-uefi_dev-prototype.img 2>/dev/null || sudo mkfs.fat -F 32 build/ancoreOS-uefi_dev-prototype.img
+	dd if=/dev/zero of=build/VNiX-uefi_dev-prototype.img bs=1M count=64
+	mkfs.fat -F 32 build/VNiX-uefi_dev-prototype.img 2>/dev/null || sudo mkfs.fat -F 32 build/VNiX-uefi_dev-prototype.img
 
 # I decided to add a little interactive box because why not?
 	@echo "Copying files to image..."
-	mcopy -i build/ancoreOS-uefi_dev-prototype.img -s build/usb_root/* ::
+	mcopy -i build/VNiX-uefi_dev-prototype.img -s build/usb_root/* ::
 	@echo ""
-	@echo "IMAGE CREATED at: build/ancoreOS-uefi_dev-prototype.img"
+	@echo "IMAGE CREATED at: build/VNiX-uefi_dev-prototype.img"
 	@echo ""
 	@echo "TO WRITE TO USB DRIVE:"
-	@echo "sudo dd if=build/ancoreOS-uefi_dev-prototype.img of=/dev/sdX bs=4M status=progress"
+	@echo "sudo dd if=build/VNiX-uefi_dev-prototype.img of=/dev/sdX bs=4M status=progress"
 	@echo "Or use a tool like balenaEtcher/Rufus to write the image onto a USB drive."
 	@echo ""
 	@echo "Replace /dev/sdX with your USB device (e.g: /dev/sdb)"
@@ -146,7 +146,7 @@ run:
 	qemu-system-x86_64 $(if $(QEMU_CPU),-cpu $(QEMU_CPU)) \
 		$(QEMU_MEM) \
 		-bios ovmf/OVMF.fd \
-		-drive file=build/ancoreOS-uefi_dev-prototype.img,format=raw \
+		-drive file=build/VNiX-uefi_dev-prototype.img,format=raw \
 		-serial stdio
 
 clean:
