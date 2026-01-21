@@ -69,10 +69,7 @@ void ISR_Initialize() {
 
 // yeah no im not touching any of this shit, i cannot go through another 8 hours of debugging
 void ISR_Handler(Registers_t *regs) {
-    printf("\nISR Handler: Handling interrupt %d\n", regs->interrupt);
-    serial_printf("\nISR Handler: Handling interrupt %d\n", regs->interrupt);
-    printf("RIP: %llx\n", regs->rip); 
-    serial_printf("RIP: %llx\n", regs->rip); 
+
 
     if (g_ISRHandlers[regs->interrupt] != NULL) {
         g_ISRHandlers[regs->interrupt](regs);
@@ -118,7 +115,8 @@ void page_fault_handler(Registers_t *regs) {
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
     asm volatile("mov %%cr3, %0" : "=r"(cr3));
     
-    int i = 5;
+                        write_color(&fb_term, COLOR_DARKRED, "KERNEL PANIC!\n");
+            serial_write("KERNEL PANIC!\n", 15);
     write_color(&fb_term, COLOR_RED, "PAGE FAULT TRIGGERED!\n");
     write_color(&fb_term, COLOR_CYAN, "You are most likely trying to access an invalid or non-mapped memory address.\n");
     write_color(&fb_term, COLOR_CYAN, "Please consult the documentation or external resources for more information on proper memory handling.\n");
@@ -148,8 +146,6 @@ void page_fault_handler(Registers_t *regs) {
         serial_write("Page fault caused by invalid write operation.\n", 47);
     }
 
-                write_color(&fb_term, COLOR_DARKRED, "KERNEL PANIC!\n");
-            serial_write("KERNEL PANIC!\n", 15);
     halt();
 }
 
@@ -160,3 +156,15 @@ void ISR_RegisterHandler(int interrupt, ISRHandler_t handler) {
 
 }
 
+void kpanic(Registers_t *regs) {
+
+
+    
+        printf("  rax=%llx  rbx=%llx  rcx=%llx  rdx=%llx  rsi=%llx  rdi=%llx\n  r8=%llx  r9=%llx  r10=%llx  r11=%llx  r12=%llx  r13=%llx\n r14=%llx  r15=%llx\n  rsp=%llx  rbp=%llx  rip=%llx  rflags=%llx  cs=%llx  ss=%llx\n  interrupt=%llx  errorcode=%llx\n",
+               regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi, regs->r8, regs->r9, regs->r10, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15, regs->rsp, regs->rbp, regs->rip, regs->rflags, regs->cs, regs->ss, regs->interrupt, regs->error);
+        
+        serial_printf("  rax=%llx  rbx=%llx  rcx=%llx  rdx=%llx  rsi=%llx  rdi=%llx\n  r8=%llx  r9=%llx  r10=%llx  r11=%llx  r12=%llx  r13=%llx\n r14=%llx  r15=%llx\n  rsp=%llx  rbp=%llx  rip=%llx  rflags=%llx  cs=%llx  ss=%llx\n  interrupt=%llx  errorcode=%llx\n",
+            regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi, regs->r8, regs->r9, regs->r10, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15, regs->rsp, regs->rbp, regs->rip, regs->rflags, regs->cs, regs->ss, regs->interrupt, regs->error);
+
+    halt();
+}

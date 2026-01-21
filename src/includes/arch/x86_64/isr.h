@@ -90,4 +90,6 @@ void ISR_Initialize();
 void ISR_RegisterHandler(int interrupt, ISRHandler_t handler);
 
 void page_fault_handler(Registers_t *regs);
+void kpanic(Registers_t *regs);
+
 #endif // ISR_H

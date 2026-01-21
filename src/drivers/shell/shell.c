@@ -42,6 +42,7 @@
 #include "includes/shell/keyboard.h"
 #include <stdio.h>
 #include "includes/memory/pmm.h"
+#include "includes/arch/x86_64/isr.h"
 
 
 extern struct terminal fb_term;
@@ -68,6 +69,7 @@ void cmd_help(void) {
     print_string("  echo  - Echo arguments\n");
     print_string("  clear - Clear screen\n");
     print_string("  pmmstats - Gets the PMM stats\n");
+    print_string("  panic    - Calls a kernel panic\n");
 }
 
 void cmd_echo(const char* args) {
@@ -89,6 +91,10 @@ printf("  Used pages : %llu pages (%llu MB)\n", used,  (used  * PAGE_SIZE) / (10
 printf("  Page size  : %llu KB\n", PAGE_SIZE);
 }
 
+void panic(void){
+
+    kpanic(NULL);
+}
 
 void execute(char* buffer) {
     // skip leading spaces
@@ -125,6 +131,9 @@ if (shell_strcmp(buffer, "help") == 0) {
     else if (shell_strcmp(buffer, "pmmstats") == 0)
     {
         pmmstats();
+    }
+    else if (shell_strcmp(buffer, "panic") == 0){
+        panic();
     }
      
     else {

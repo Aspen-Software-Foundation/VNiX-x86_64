@@ -36,6 +36,8 @@
  * MA 02110-1301, USA.
 */
 
+//A Note from the Aspen team: Please excuse us for the horrors you may find in this OS.
+
 #include "drivers/terminal/src/cuoreterm.h"
 #include "drivers/terminal/src/kfont.h"
 #include "arch/limine.h"
@@ -123,7 +125,7 @@ void kernel_main(void) {
     enable_interrupts();
     ISR_Initialize();
     APIC_IRQ_Initialize();
-
+    keyboard_apic_init();
     
 
     void vmm_test_mapping(void) {
@@ -242,6 +244,7 @@ vmm_test_unmap();
 
     printf("=== malloc tests complete ===\n\n");
     serial_write("=== malloc tests complete ===\n\n", 33);
+
     shell_main();
 
     while (1);

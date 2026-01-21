@@ -43,7 +43,7 @@
 #include <stdbool.h> //for the "are_interrupts_enabled" function
 #include "includes/util/log-info.h"
 
-void halt() {
+void halt(void) {
     uint64_t rip;
 
     __asm__ volatile (
@@ -133,3 +133,5 @@ void disable_interrupts(void) {
         SERIAL(Error, disable_interrupts, "Failed to disable interrupts\n");
     }
 }
+
+
