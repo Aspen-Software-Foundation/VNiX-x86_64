@@ -44,10 +44,6 @@
 #include "string.h"
 #include "arch/x86_64/gdt.h"
 
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
 
 void *itoa(int32_t value, char *str, uint32_t base);
 void* malloc(size_t size);

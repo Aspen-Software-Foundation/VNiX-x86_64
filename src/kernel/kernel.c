@@ -38,6 +38,8 @@
 
 //A Note from the Aspen team: Please excuse us for the horrors you may find in this OS.
 
+//Kernel Revision 3A, 
+
 #include "drivers/terminal/src/cuoreterm.h"
 #include "drivers/terminal/src/kfont.h"
 #include "arch/limine.h"

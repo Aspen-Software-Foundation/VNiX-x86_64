@@ -40,6 +40,11 @@
 #define _STDINT_H
 
 
+#if __SIZEOF_POINTER__ != 8
+#error "VNiX's standard integer definitons currently only support 64-bit platforms"
+#endif
+
+
 typedef signed char        int8_t;
 typedef unsigned char      uint8_t;
 typedef signed short       int16_t;
@@ -130,14 +135,6 @@ typedef uint64_t           uintmax_t;
 #define INTMAX_MAX         INT64_MAX
 #define UINTMAX_MAX        UINT64_MAX
 
-#define PTRDIFF_MIN        INT64_MIN
-#define PTRDIFF_MAX        INT64_MAX
-
-#define SIZE_MAX           UINT64_MAX
-
-#define SIG_ATOMIC_MIN     INT32_MIN
-#define SIG_ATOMIC_MAX     INT32_MAX
-
 #define WCHAR_MIN          INT32_MIN
 #define WCHAR_MAX          INT32_MAX
 
@@ -157,4 +154,4 @@ typedef uint64_t           uintmax_t;
 #define INTMAX_C(c)        c ## L
 #define UINTMAX_C(c)       c ## UL
 
-#endif /* _STDINT_H */
+#endif 

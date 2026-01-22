@@ -16,7 +16,6 @@ Version: dev-prototype
     - Fixed mismatched functions in klibc
     - Added better OVMF support
     - Added util.h
-    - Removed stddef.h
     - Added stdint.h
     - Added liballoc
     - Improved memory manipulation functions
@@ -33,4 +32,5 @@ Version: dev-prototype
     - Added shell and keyboard drivers
     - Improved PMM to display free, used, and total
     - Small tweaks to klibc
+    - Added sys/types.h, assert.h, errno.h, and readded stddef.h
     More to come soon.

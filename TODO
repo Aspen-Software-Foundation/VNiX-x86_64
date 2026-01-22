@@ -1,0 +1,6 @@
+The things we plan/need to implement:
+
+TODO: Add a VFS
+TODO: Add a time.c/.h (note: we need to upgrade keyboard.h/.c after time)
+TODO: Storage and userspace, as well as upgrading the kernel libc (klibc)
+TODO: After userpace, we need a shell (bash)
