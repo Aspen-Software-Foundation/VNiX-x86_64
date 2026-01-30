@@ -128,6 +128,8 @@ static inline void APIC_WriteIO(uint32_t reg, uint32_t value) {
     apic_io_base[IOAPIC_REG_WINDOW / sizeof(uint32_t)] = value;
 }
 
+
+
 // APIC Interrupt Control
 
 // fns for setting and getting the APIC base address

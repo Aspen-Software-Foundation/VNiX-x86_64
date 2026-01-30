@@ -249,3 +249,9 @@ void cuoreterm_clear(struct terminal *term) {
     term->cursor_x = 0;
     term->cursor_y = 0;
 }
+
+// batch write function
+void cuoreterm_write(struct terminal *term, const char* buf, int len) {
+    for (int i = 0; i < len; i++)
+        cuoreterm_draw_char(term, buf[i], term->fgcol);
+}

@@ -62,6 +62,14 @@
 #define IOAPIC_DELIVERY_MODE  0x00000100  // Fixed delivery mode (normal interrupt)
 #define IOAPIC_DESTINATION    0x00000000  // Send to all CPUs (this is usually specific for SMP systems)
 
+uint8_t keyboard_read_response_safe() {
+    // Wait until output buffer is full
+    while (!(inb(0x64) & 0x01)) {
+        /* spin */ 
+    }
+    return inb(0x60);  // now safe to read
+}
+
 
 // The following Keyboard layout struct may be under the fullowing license:
 // https://github.com/Prankiman/tetrisOS/blob/master/LICENSE
@@ -132,7 +140,7 @@ uint8_t keyboard_set_typematic(keyboard_repeat_rate_t repeat_rate, keyboard_dela
 uint8_t keyboard_set_leds(keyboard_LEDState_t led_state) {
     keyboard_send_command(CMD_LED_STATE);
     keyboard_send_data((uint8_t)led_state);
-    uint8_t response = keyboard_read_response();
+    uint8_t response = keyboard_read_response_safe();
     if (response == RES_ACK) {
         return 0;
     } else if (response == RES_RESEND) {
@@ -144,7 +152,7 @@ uint8_t keyboard_set_leds(keyboard_LEDState_t led_state) {
 // Function to enable scanning (keyboard sends scan codes)
 uint8_t keyboard_enable_scanning() {
     keyboard_send_command(CMD_ENABLE_SCANNING);
-    uint8_t response = keyboard_read_response();
+    uint8_t response = keyboard_read_response_safe();
     if (response == RES_ACK) {
         return 0;
     } else if (response == RES_RESEND) {
@@ -156,10 +164,10 @@ uint8_t keyboard_enable_scanning() {
 // Function to reset keyboard (self-test)
 uint8_t keyboard_reset() {
     keyboard_send_command(CMD_RESET);
-    uint8_t response = keyboard_read_response();
+    uint8_t response = keyboard_read_response_safe();
     if (response == RES_ACK) {
         // Self-test passed
-        response = keyboard_read_response(); // Read self-test result
+        response = keyboard_read_response_safe(); // Read self-test result
         if (response == RES_SELF_TEST_PASSED) {
             return 0;
         } else if (response == RES_SELF_TEST_FAILED) {
@@ -174,7 +182,7 @@ uint8_t keyboard_reset() {
 // Function to identify keyboard
 uint8_t keyboard_identify() {
     keyboard_send_command(CMD_IDENTIFY_KEYBOARD);
-    uint8_t response = keyboard_read_response();
+    uint8_t response = keyboard_read_response_safe();
     if (response == RES_ACK) {
         return 0;
     } else if (response == RES_RESEND) {
@@ -187,12 +195,16 @@ uint8_t keyboard_identify() {
 void keyboard_handler(Registers_t *regs) {
     static bool extended = false;
     iowait();
-    uint8_t scancode = keyboard_read_response();
+    uint8_t scancode = keyboard_read_response_safe();
+
 
     if (scancode == 0xE0) {
         extended = true;
         return; // wait for the next byte
     }
+
+
+
 
     bool is_release = scancode & 0x80;
     uint8_t code = scancode & 0x7F;
@@ -233,6 +245,7 @@ void keyboard_handler(Registers_t *regs) {
         } else if (KEY_SCANCODE(scancode) == KEY_SCROLL_LOCK) {
             keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_SCROLL_LOCK), KEY_IS_PRESS(scancode));
         }
+        
         (void)regs;
         return;
     }
@@ -260,7 +273,8 @@ void keyboard_handler(Registers_t *regs) {
     char keyDOWN = KEY_CHAR(scancode|keyboard.mods);
     if (keyboard.mods & KEY_MOD_CAPS_LOCK && keyDOWN >= 'a' && keyDOWN <= 'z')
         keyDOWN += keyboard.mods & KEY_MOD_SHIFT ? 32 : -32;
-    keyboard.chars[keyDOWN] = KEY_IS_PRESS(scancode);
+    keyboard.chars[(uint8_t)keyDOWN] = KEY_IS_PRESS(scancode);
+
 
     if (keyboard.chars[KEY_CHAR(scancode)] && !was_on && \
     (KEY_CHAR(scancode) >= 32 && KEY_CHAR(scancode) <= 126)) {
@@ -269,6 +283,8 @@ void keyboard_handler(Registers_t *regs) {
     (KEY_CHAR(scancode) >= 32 && KEY_CHAR(scancode) <= 126)) {
         //terminal_printf("You released %c \n", KEY_CHAR(scancode|keyboard.mods));
     }
+
+    LAPIC_SendEOI();
     (volatile void)regs;
 }
 
@@ -331,11 +347,13 @@ void IOAPIC_MaskIRQ1() {
 
 
 char getc(void) {
+
     static bool key_was_pressed[128] = {false};
     
     while (1) {
-        bool shift_pressed = keyboard.keys[KEY_LSHIFT] || keyboard.keys[KEY_RSHIFT];
-        bool caps_lock_on = keyboard.mods & KEY_MOD_CAPS_LOCK;
+    (void)(keyboard.keys[KEY_LSHIFT] || keyboard.keys[KEY_RSHIFT]);
+    (void)(keyboard.mods & KEY_MOD_CAPS_LOCK);
+
 
         //scan through chars
         for (uint8_t key = 0; key < 128; key++) {

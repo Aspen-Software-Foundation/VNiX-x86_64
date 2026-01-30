@@ -37,4 +37,6 @@ Version: dev-prototype
     - Added storage and filesystem support
     - Improved makefile
     - Added time (a little)
+    - Added USB support
+    
     More to come soon.

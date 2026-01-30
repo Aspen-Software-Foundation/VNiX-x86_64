@@ -41,6 +41,7 @@ struct terminal {
     uint32_t font_height;
     uint32_t cols;
     uint32_t rows;
+    uint32_t scroll_offset;
 };
 
 void cuoreterm_init(
@@ -72,6 +73,8 @@ void cuoreterm_set_font(
 );
 
 void cuoreterm_clear(struct terminal *term);
+
+void cuoreterm_write(struct terminal *term, const char* buf, int len);
 
 #ifdef __cplusplus
 }
