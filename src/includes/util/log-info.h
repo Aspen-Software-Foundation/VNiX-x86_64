@@ -101,7 +101,7 @@ static inline void color_print(const char *color, const char *fmt, ...) {
     printf("%s", color);
     
     va_start(args, fmt);
-    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    printf("%s %d %c %d", buffer, sizeof(buffer), fmt, args);
     va_end(args);
     
     printf("%s", buffer);

@@ -34,7 +34,7 @@
 # FOUNDATION, INC., 51 FRANKLIN STREET, FIFTH FLOOR, BOSTON,
 # MA 02110-1301, USA.
 
-CFLAGS := -I src/ -ffreestanding -Wall -Wextra -Wunused-parameter -static -nostartfiles -nostdlib -fno-pie -no-pie -mno-red-zone -mcmodel=large -T linker.ld -I src/includes/ -I src/includes/klibc/ -I src/drivers/memory/liballoc/ -D_ALLOC_SKIP_DEFINE
+CFLAGS := -I src/ -ffreestanding -Wall -Wextra -Wunused-parameter -Wimplicit-function-declaration -static -nostartfiles -nostdlib -fno-pie -no-pie -mno-red-zone -mcmodel=large -T linker.ld -I src/includes/ -I src/includes/klibc/ -I src/drivers/memory/liballoc/ -D_ALLOC_SKIP_DEFINE
 LDFLAGS := -nostdlib -static -z noexecstack
 QEMU_CPU ?=
 QEMU_MEM ?= -m 1G

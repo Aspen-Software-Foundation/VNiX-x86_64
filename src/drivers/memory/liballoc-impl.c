@@ -39,6 +39,7 @@
 #include "includes/memory/pmm.h"
 #include "includes/memory/vmm.h"
 #include "arch/limine.h"
+#include "includes/util/serial.h"
 #include <stddef.h>
 #include <stdio.h>
 

@@ -46,7 +46,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>   
-
+#include "includes/arch/x86_64/isr.h"
 
 
 // funcs
@@ -218,7 +218,7 @@ uint8_t keyboard_enable_scanning();
 uint8_t keyboard_reset();
 uint8_t keyboard_identify();
 
-void keyboard_handler();
+void keyboard_handler(Registers_t *regs);
 void keyboard_pic_init();
 void keyboard_apic_init();
 void IOAPIC_ConfigureKeyboard();

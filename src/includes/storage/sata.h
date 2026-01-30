@@ -109,4 +109,5 @@ int sata_ahci_identify_satapi(volatile uint32_t *port_base, void *buffer);
 // Needs an 8 byte buffer. Buffer will contain uint32_t size_lba (Big Endian) and size_sector (Big Endian)
 int sata_ahci_identify_satapi_properly(volatile uint32_t *port_base, void *buffer);
 void sata_search(uint32_t mmio_base);
+void sata_init(void);
 #endif // DRIVERS_SATA_H
