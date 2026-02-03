@@ -608,7 +608,7 @@ static uint32_t dummy_mmio_base = 0xF0000000;
 // Simple SATA init function
 void sata_init(void) {
     LOG(Debug, storage_init, "Initializing SATA/AHCI...\n");
-
+    SERIAL(Debug, storage_init, "Initializing SATA/AHCI...\n");
     // For now, simulate detection of one SATA drive
     storage_device_t dev = {0};
     dev.type_identifier = 'S';
@@ -620,7 +620,7 @@ void sata_init(void) {
     sata_temp_count = 1;
 
     LOG(Debug, storage_init, "Detected %u SATA devices.\n", sata_temp_count);
-
+    SERIAL(Debug, storage_init, "Detected %u SATA devices.\n", sata_temp_count);
     // If you want, call sata_search() here and actually fill sata_temp_devices
     // sata_search(dummy_mmio_base);
 }

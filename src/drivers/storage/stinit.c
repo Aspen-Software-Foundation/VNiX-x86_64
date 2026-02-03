@@ -54,16 +54,18 @@ uint32_t storage_device_count = 0;
 static void register_device(storage_device_t dev) {
     if (storage_device_count >= MAX_STORAGE_DEVICES) {
         LOG(Warn, storage_init, "Max storage devices reached!\n");
+        SERIAL(Warn, storage_init, "Max storage devices reached!\n");
         return;
     }
     storage_devices[storage_device_count++] = dev;
     LOG(Debug, storage_init, "");
     printf("Registered device type '%c', sector_size=%u\n", dev.type_identifier, (uint32_t)dev.sector_size);
+
+    SERIAL(Debug, storage_init, "");
+    serial_printf("Registered device type '%c', sector_size=%u\n", dev.type_identifier, (uint32_t)dev.sector_size);
 }
 
 void storage_init(void) {
-    LOG(Debug, storage_init, "Initializing storage drivers...\n");
-
     //ata_init();
     for (uint8_t drive = 0; drive < 2; drive++) { // primary master/slave
         uint16_t identify_data[256];
@@ -103,5 +105,7 @@ void storage_init(void) {
     }
 
     LOG(Debug, storage_init, "Storage initialization complete, %u device(s) found.\n",
+        storage_device_count);
+    SERIAL(Debug, storage_init, "Storage initialization complete, %u device(s) found.\n",
         storage_device_count);
 }
