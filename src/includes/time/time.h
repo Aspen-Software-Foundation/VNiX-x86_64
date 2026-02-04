@@ -2,8 +2,8 @@
     Copyright (C) 2026 Aspen Software Foundation
 
     Module: time.h
-    Description: The time module for the VNiX Operating System.
-    Author: Yazin Tantawi
+    Description: Time module for the VNiX Operating System.
+    Author: Mejd Almohammedi
 
     All components of the VNiX Operating System, except where otherwise noted, 
     are copyright of the Aspen Software Foundation (and the corresponding author(s)) and licensed under GPLv2 or later.
@@ -36,10 +36,36 @@
  * MA 02110-1301, USA.
 */
 
-
 #ifndef TIME_H
 #define TIME_H
 
-void udelay(uint64_t us);
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include "includes/arch/x86_64/io.h"
+#include "util/includes/math.h"
+#include "util/includes/pit.h"
+#include "tsc.h"
 
-#endif
+
+typedef enum{
+    PIT_DELAY    = 0,
+    PIC_DELAY    = 1,
+    APIC_DELAY   = 2,
+    IOAPIC_DELAY = 3,
+    TSC_DELAY    = 4,
+    HPET_DELAY   = 5,
+} t_delay_mode;
+
+
+int8_t set_CPU_clock_speed(void);
+
+uint32_t get_time_us(void);
+uint32_t get_time_ms(void);
+double get_time_ms_fp(void);
+
+int8_t udelay(uint32_t micros);
+int8_t tsc_delay_us(uint32_t micros);
+
+
+#endif // TIME_H

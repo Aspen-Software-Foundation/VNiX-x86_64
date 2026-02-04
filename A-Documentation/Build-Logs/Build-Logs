@@ -39,5 +39,6 @@ Version: dev-prototype
     - Added time (a little)
     - Added USB support
     - Changed terminal to flanterm, removed uneeded files, improved makefile, and changed directory structure.
+    - Added PCI, PIT, TSC, and full time support, and implemented USB support
     
     More to come soon.

@@ -42,32 +42,6 @@
 #include "includes/storage/ata.h"
 #include "includes/time/time.h"
 
-static inline void insw(uint16_t port, void *buf, unsigned long count) {
-    __asm__ __volatile__ (
-        "cld; rep insw"
-        : "+D"(buf), "+c"(count)
-        : "d"(port)
-        : "memory"
-    );
-}
-
-static inline uint16_t inw(uint16_t port) {
-    uint16_t ret;
-    __asm__ __volatile__ (
-        "inw %1, %0"
-        : "=a"(ret)
-        : "d"(port)
-    );
-    return ret;
-}
-
-static inline void outw(uint16_t port, uint16_t val) {
-    __asm__ __volatile__ (
-        "outw %0, %1"
-        :
-        : "a"(val), "d"(port)
-    );
-}
 
 
 uint8_t ata_status = 0;

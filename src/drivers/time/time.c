@@ -36,22 +36,82 @@
  * MA 02110-1301, USA.
 */
 
-#include <stdint.h>
+/*
+            The AMPOS Operating System is
+            copyright under the Aspen Software Foundation (And the file's corresponding developers)
+            
+            This project is licensed under the GNU Public License v2;
+            For more information, visit "https://www.gnu.org/licenses/gpl-2.0.en.html"
+            OR see to the "LICENSE" file.
 
-static inline uint64_t rdtsc(void)
-{
-    uint32_t lo, hi;
-    __asm__ volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)hi << 32) | lo;
+*/
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include "includes/arch/x86_64/io.h"
+#include "util/includes/util.h"
+#include "util/includes/math.h"
+#include "util/includes/pit.h"
+#include "includes/time/tsc.h"
+#include "includes/time/time.h"
+
+t_delay_mode microdelay_mode = TSC_DELAY;
+
+
+uint32_t get_time_ms(void) {
+    int8_t error = set_CPU_clock_speed();
+
+    if (error)
+        return 0; // Error: CPU clock speed not set
+    
+    uint64_t tsc = read_tsc_serialized() * 1000;
+    return (uint32_t)(tsc / CPU_clock_speed); // Convert TSC ticks to milliseconds. should be fine for the first 68 years on 8GHz CPU or more for weaker CPUs
+    // (2^64 upper limit / 2^33 CPU clock cycles per second on some super CPUs) = 2^31 seconds = 68 years without reboot before astornomical bugs.
+}   // looks like we implemented it. Ig I did know after all.
+
+double get_time_ms_fp(void) {
+    int8_t error = set_CPU_clock_speed();
+    if (error)
+        return 0.0; // cpu clock speed not set
+
+    uint64_t tsc = read_tsc_serialized();           // raw CPU cycles
+    double seconds = (double)tsc / CPU_clock_speed; // seconds with fraction
+    return seconds * 1000.0;                        // milliseconds with fraction
 }
 
-uint64_t cpu_mhz = 3500; // example: 3.5 GHz
+uint32_t get_time_us(void) {
+    int8_t error = set_CPU_clock_speed();
 
-void udelay(uint64_t us)
-{
-    uint64_t start = rdtsc();
-    uint64_t ticks = us * cpu_mhz;
+    if (error)
+        return 0; // Error: CPU clock speed not set
+    
+    uint64_t tsc = read_tsc_serialized();
+    uint64_t cycles_per_us = CPU_clock_speed / 1000000; // How many cycles per microsecond
+    return (uint32_t)(tsc / cycles_per_us);
+}
 
-    while ((rdtsc() - start) < ticks)
-        __asm__ volatile ("pause");
+int8_t udelay(uint32_t micros) {
+    if (microdelay_mode == PIT_DELAY && !pit_get_is_legit()) {
+        microdelay_mode = TSC_DELAY;
+    }
+    if (microdelay_mode == TSC_DELAY && !cpu_has_tsc()) {
+        microdelay_mode = HPET_DELAY;
+    }
+    switch (microdelay_mode) {
+        case PIT_DELAY:
+            pit_delay_us(micros); return 0;
+        case PIC_DELAY:
+            return -1; // Error: unknown delay mode
+        case APIC_DELAY:
+            return -1; // Error: unknown delay mode
+        case IOAPIC_DELAY:
+            return -1; // Error: unknown delay mode
+        case TSC_DELAY:
+            return tsc_delay_us(micros);
+        case HPET_DELAY:
+            return -1; // Error: unknown delay mode
+        default:
+            return -1; // Error: unknown delay mode
+    }
 }

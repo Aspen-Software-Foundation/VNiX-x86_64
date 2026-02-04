@@ -57,7 +57,8 @@ void vmm_init(void);
 #define PTE_DIRTY     0x40    // Set by CPU on write
 #define PTE_HUGE      0x80    // Huge page (2MB or 1GB)
 #define PTE_GLOBAL    0x100
-
+#define PTE_CACHE_DISABLE   (1ULL << 4)   /* Cache disabled (PCD) */
+#define PTE_WRITE_THROUGH   (1ULL << 3)   /* Write-through caching (PWT) */
 
 #define PML4_INDEX(x) (((x) >> 39) & 0x1FF)
 #define PDPT_INDEX(x) (((x) >> 30) & 0x1FF)

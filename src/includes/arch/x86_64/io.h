@@ -139,6 +139,45 @@ static inline void set_cr3(uint64_t val)
     __asm__ volatile("mov %0, %%cr3" :: "r"(val));
 }
 
+
+static inline uint32_t inl(uint16_t port) {
+    uint32_t value;
+    __asm__ volatile ("inl %1, %0" : "=a"(value) : "Nd"(port));
+    return value;
+}
+
+static inline void outl(uint16_t port, uint32_t value) {
+    __asm__ volatile ("outl %0, %1" : : "a"(value), "Nd"(port));
+}
+
+static inline uint16_t inw(uint16_t port) {
+    uint16_t value;
+    __asm__ volatile ("inw %1, %0" : "=a"(value) : "Nd"(port));
+    return value;
+}
+
+static inline void outw(uint16_t port, uint16_t value) {
+    __asm__ volatile ("outw %0, %1" : : "a"(value), "Nd"(port));
+}
+
+static inline void insw(uint16_t port, void *buf, unsigned long count) {
+    __asm__ __volatile__ (
+        "cld; rep insw"
+        : "+D"(buf), "+c"(count)
+        : "d"(port)
+        : "memory"
+    );
+}
+
+static inline void outsw(uint16_t port, const void *buf, unsigned long count) {
+    __asm__ __volatile__ (
+        "cld; rep outsw"
+        : "+S"(buf), "+c"(count)
+        : "d"(port)
+        : "memory"
+    );
+}
+
 void enable_interrupts();
 void disable_interrupts();
 void halt_interrupts_enabled(void);

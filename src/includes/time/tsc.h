@@ -1,8 +1,8 @@
 /*
     Copyright (C) 2026 Aspen Software Foundation
 
-    Module: math.h
-    Description: Math module for the VNiX Operating System.
+    Module: tsc.h
+    Description: TSC module for the VNiX Operating System.
     Author: Mejd Almohammedi
 
     All components of the VNiX Operating System, except where otherwise noted, 
@@ -36,67 +36,68 @@
  * MA 02110-1301, USA.
 */
 
+#ifndef TSC_H
+#define TSC_H
 
-#ifndef MATH_H
-#define MATH_H
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include "util.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include "includes/arch/x86_64/io.h"
+#include "util/includes/math.h"
+extern uint64_t CPU_clock_speed;
 
-#define E 2.71828
-#define PI 3.14159265358979323846264338327950
+uint64_t measure_tsc_over_pit(uint16_t pit_reload);
+uint64_t get_cpu_clock_speed_khz(void);
+int8_t tsc_delay_us(uint32_t micros);
 
 
-static inline uint32_t abs32(int32_t x) {
-    return x < 0 ? -x : x;
+static inline bool cpu_has_tsc(void) {
+    uint32_t eax, ebx, ecx, edx;
+    eax = 1; // function 1: feature flags
+    asm("cpuid"
+        : "=d"(edx), "=a"(eax), "=b"(ebx), "=c"(ecx)
+        : "a"(eax)
+        : );
+    return (edx & (1 << 4)) != 0; // bit 4 = TSC
 }
 
-static inline uint16_t abs16(int16_t x) {
-    return x < 0 ? -x : x;
+static inline uint64_t read_tsc_serialized(void) {
+    uint32_t lo, hi;
+
+    // Serialize instructions before reading TSC
+    asm(
+        "cpuid\n"           // serialize
+        "rdtsc\n"           // read TSC
+        : "=a"(lo), "=d"(hi)
+        : "a"(0)             // CPUID with eax=0
+        : "ebx", "ecx"
+    );
+
+    return ((uint64_t)hi << 32) | lo;
 }
 
-static inline uint8_t abs8(int8_t x) {
-    return x < 0 ? -x : x;
+static inline int8_t set_CPU_clock_speed_partial(void) {
+    if (CPU_clock_speed == 0)
+        CPU_clock_speed = get_cpu_clock_speed_khz() * 1000;  // set in hz
+
+    return CPU_clock_speed == 0 ? -1 : 0; // Error detection
 }
 
-// Helper functions for min and max.
-static inline uint32_t min32(int a, int b) {
-    return (a < b) ? a : b;
-}
-static inline uint32_t max32(int a, int b) {
-    return (a > b) ? a : b;
-}
+static inline int8_t set_CPU_clock_speed(void) {
+    if (CPU_clock_speed != 0)
+        return 0; // Already set
 
-static inline uint32_t log2u(uint32_t number) {
-    uint32_t num=number, counter=0;
-    for (; num!=1; counter++) {
-        num >>= 1;
+    uint64_t accumulate = 0;
+    for (int i=0; i<10; i++) {
+        set_CPU_clock_speed_partial();
+        if (CPU_clock_speed == 0) 
+            return -1;
+
+        accumulate += CPU_clock_speed/1000; // in khz
     }
-    return counter;
+
+    CPU_clock_speed = accumulate * 100; // average in hz
+    return 0; // Success
 }
 
-uint32_t roundf(float number);
-double fabs(double x);
-double fmod(double x, double y);
-float fmodf(float x, float y);
-double sin(double x);
-double cos(double x);
-float sinf(float x);
-float cosf(float x);
-double tan(double x);
-float tanf(float x);
-double pow(double x, double y);
-
-// Compute the x coordinate where the horizontal line at y intersects the edge (a, b).
-static inline int compute_intersection_x(uint16_Vector2_t a, uint16_Vector2_t b, int y) {
-    if (a.y == b.y)
-        return a.x; // Horizontal edge - return one endpoint.
-    float t = (float)(y - a.y) / (float)(b.y - a.y);
-    return a.x + (int)((b.x - a.x) * t);
-}
-
-uint64_t __udivdi3(uint64_t n, uint32_t d);
-uint64_t __umoddi3(uint64_t n, uint32_t d);
-
-#endif // MATH_H
+#endif // TSC_H

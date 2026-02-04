@@ -1,70 +1,94 @@
 /*
- ehci.c
- EHCI + USB Mass Storage sector reader with proper async list management
+    Copyright (C) 2026 Aspen Software Foundation
 
- Author: the Aspen Software Foundation (And the file's corresponding developers) (with fixes)
+    Module: ehci.c
+    Description: EHCI module for the VNiX Operating System.
+    Author: Mejd Almohammedi, edited by Yazin Tantawi
+
+    All components of the VNiX Operating System, except where otherwise noted, 
+    are copyright of the Aspen Software Foundation (and the corresponding author(s)) and licensed under GPLv2 or later.
+    For more information on the Gnu Public License Version 2, please refer to the LICENSE file
+    or to the link provided here: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+
+ * THIS OPERATING SYSTEM IS PROVIDED "AS IS" AND "AS AVAILABLE" UNDER 
+ * THE GNU GENERAL PUBLIC LICENSE VERSION 2, WITHOUT
+ * WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+ * TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE, TITLE, AND NON-INFRINGEMENT.
+ * 
+ * TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL
+ * THE AUTHORS, COPYRIGHT HOLDERS, OR CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE), ARISING IN ANY WAY OUT OF THE USE OF THIS OPERATING SYSTEM,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE OPERATING SYSTEM IS
+ * WITH YOU. SHOULD THE OPERATING SYSTEM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+ * ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
+ *
+ * YOU SHOULD HAVE RECEIVED A COPY OF THE GNU GENERAL PUBLIC LICENSE
+ * ALONG WITH THIS OPERATING SYSTEM; IF NOT, WRITE TO THE FREE SOFTWARE
+ * FOUNDATION, INC., 51 FRANKLIN STREET, FIFTH FLOOR, BOSTON,
+ * MA 02110-1301, USA.
 */
 
-/*
-            The AMPOS Operating System is
-            copyright under the Aspen Software Foundation (And the file's corresponding developers)
-            
-            This project is licensed under the GNU Public License v2;
-            For more information, visit "https://www.gnu.org/licenses/gpl-2.0.en.html"
-            OR see to the "LICENSE" file.
-
-*/
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include "util/strops.h"
-#include "memory/memops.h"
-#include "memory/memory.h"
-#include "memory/paging.h"
-#include "lightshell/terminal.h"
-#include "time/time.h"
-#include "usb/ehci.h"
-
-
+#include <stdio.h>
+#include "util/includes/util.h"
+#include <stdlib.h>
+#include <string.h>
+#include "includes/time/time.h"
+#include "includes/hci/ehci.h"
+#include "util/includes/log-info.h"
+#include "includes/memory/pmm.h"
+#include "includes/memory/vmm.h"
+#include "includes/pci/pci.h"
 volatile struct ehci_regs *ehci = NULL;
-/* Global persistent async list head */
+// global persistent async list head
 static qh_t *async_list_head = NULL;
 static uintptr_t async_list_head_phys = 0;
 static uint32_t global_tag = 0x1000;
 
 extern uint32_t pid_rn;
 
-/* -------------------------------------------------------------------------
-   Low-level EHCI control
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    low-level EHCI control
+// -------------------------------------------------------------------------
 int ehci_stop_controller(void) {
-    terminal_printf("EHCI: stopping controller\n");
+    printf("EHCI: stopping controller\n");
     ehci->USBCMD &= ~EHCI_RUN_STOP;
 
     uint32_t start = get_time_ms();
     while (!(ehci->USBSTS & EHCI_USBSTS_HCHALTED)) {
         if (get_time_ms() - start > 500) {
-            PRINT_EXTENDED2(FG_WARN, "", "[%f] ./usb/ehci.c: EHCI: stop timeout, STS=%08x CMD=%08x, EHCIBASE=%08x\n",
-                 get_time_ms_fp()/1000, ehci->USBSTS, ehci->USBCMD, ehci);
+            LOG(Ok, ehci_stop_controller, "");
+            printf("EHCI: stop timeout, STS=%08x CMD=%08x, EHCIBASE=%08x\n", ehci->USBSTS, ehci->USBCMD, ehci);
             return -1;
         }
         udelay(1000);
     }
 
-    PRINT_EXTENDED2(FG_OK, "","[%f] ./usb/ehci.c: EHCI: halted successfully, STS=%08x CMD=%08x\n",
-         get_time_ms_fp()/1000, ehci->USBSTS, ehci->USBCMD);
+         LOG(Ok, ehci_stop_controller, "");
+         printf("EHCI: halted successfully, STS=%08x CMD=%08x\n", ehci->USBSTS, ehci->USBCMD);
+
     return 0;
 }
 
 int ehci_reset_controller(void) {
-    terminal_printf("EHCI: resetting controller\n");
+    printf("EHCI: resetting controller\n");
 
     // optional: ensure halted before reset
     if (!(ehci->USBSTS & EHCI_USBSTS_HCHALTED)) {
-        terminal_printf("EHCI: controller not halted, stopping first\n");
+        printf("EHCI: controller not halted, stopping first\n");
         if (ehci_stop_controller() < 0) {
-            terminal_printf("EHCI: failed to stop before reset\n");
+            printf("EHCI: failed to stop before reset\n");
             return -2;
         }
     }
@@ -72,19 +96,19 @@ int ehci_reset_controller(void) {
     udelay(1000);
 
     ehci->USBCMD = EHCI_RESET;
-    terminal_printf("EHCI: CMD after set reset=%08x\n", ehci->USBCMD);
+    printf("EHCI: CMD after set reset=%08x\n", ehci->USBCMD);
 
     uint32_t start = get_time_ms();
     while (ehci->USBCMD & EHCI_RESET) {
         if (get_time_ms() - start > 1000) {
-            terminal_printf("EHCI: reset timeout, CMD=%08x STS=%08x, EHCIBASE=%08x\n",
+            printf("EHCI: reset timeout, CMD=%08x STS=%08x, EHCIBASE=%08x\n",
                   ehci->USBCMD, ehci->USBSTS, ehci);
             return -1;
         }
         udelay(1000);
     }
 
-    terminal_printf("EHCI: reset complete, CMD=%08x STS=%08x\n",
+    printf("EHCI: reset complete, CMD=%08x STS=%08x\n",
           ehci->USBCMD, ehci->USBSTS);
 
     udelay(1000);
@@ -93,17 +117,18 @@ int ehci_reset_controller(void) {
 
 
 int ehci_init_async_list(void) {
-    void *qh_page = phys_to_virt(pg_malloc(16, 4096));
-    if (!qh_page) return -1;
+    uint64_t qh_page_phys = palloc();
+    if (!qh_page_phys) return -1;
+    void *qh_page = phys_to_virt(qh_page_phys);
     
     memset(qh_page, 0, 4096);
     async_list_head = (qh_t *)qh_page;
     async_list_head_phys = (uintptr_t)virt_to_phys(qh_page);
     
-    /* Setup dummy QH with H-bit */
+    // setup dummy QH with H-bit
     async_list_head->horiz_link = (uint32_t)async_list_head_phys | 0x2;
     async_list_head->ep_char = 0x00000000;
-    async_list_head->ep_cap = 0x40000000;  /* H-bit */
+    async_list_head->ep_cap = 0x40000000;  // H-bit
     async_list_head->curr_qtd = 0x1;
     async_list_head->overlay.next = 0x1;
     async_list_head->overlay.token = 0x40;
@@ -115,39 +140,39 @@ int ehci_init_async_list(void) {
 }
 
 int ehci_init_simple(void) {
-    terminal_printf("EHCI init start\n");
+    printf("EHCI init start\n");
 
     if (ehci_stop_controller() < 0) {
-        terminal_printf("EHCI stop failed\n");
+        printf("EHCI stop failed\n");
         return -1;
     }
 
-    terminal_printf("EHCI stopped\n");
+    printf("EHCI stopped\n");
 
     if (ehci_reset_controller() < 0) {
-        terminal_printf("EHCI reset failed\n");
+        printf("EHCI reset failed\n");
         return -2;
     }
 
-    terminal_printf("EHCI reset ok\n");
+    printf("EHCI reset ok\n");
 
     if (ehci_init_async_list() < 0) {
-        terminal_printf("EHCI async list init failed\n");
+        printf("EHCI async list init failed\n");
         return -3;
     }
 
-    terminal_printf("Async list ok\n");
+    printf("Async list ok\n");
 
     ehci->PERIODICLISTBASE = 0;
     ehci->USBINTR = 0;
     ehci->USBCMD |= (EHCI_ASYNC_EN | EHCI_RUN_STOP);
 
-    terminal_printf("EHCI controller run command issued\n");
+    printf("EHCI controller run command issued\n");
 
     uint32_t start = get_time_ms();
     while (!(ehci->USBSTS & (1 << 15))) {
         if (get_time_ms() - start > 100) {
-            terminal_printf("Timeout waiting for EHCI HCHalted bit clear\n");
+            printf("Timeout waiting for EHCI HCHalted bit clear\n");
             break;
         }
         udelay(100);
@@ -155,16 +180,16 @@ int ehci_init_simple(void) {
 
     uint32_t cmd = ehci->USBCMD;
     uint32_t sts = ehci->USBSTS;
-    terminal_printf("EHCI USBCMD=0x%x, USBSTS=0x%x\n", cmd, sts);
+    printf("EHCI USBCMD=0x%x, USBSTS=0x%x\n", cmd, sts);
 
-    terminal_printf("EHCI init done\n");
+    printf("EHCI init done\n");
     return 0;
 }
 
 
-/* -------------------------------------------------------------------------
-   Port management
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    port management
+// -------------------------------------------------------------------------
 
 int ehci_port_connected(int port_num) {
     if (port_num < 0 || port_num >= 16) return 0;
@@ -226,16 +251,17 @@ int ehci_find_and_reset_device(int *port_num_out) {
     return -1;
 }
 
-/* -------------------------------------------------------------------------
-   Transfer functions
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    transfer functions
+// -------------------------------------------------------------------------
 
 int ehci_submit_bulk_simple(uint8_t devaddr, uint8_t ep_addr, void *data_vaddr, 
                            size_t len, int dir_in, uint32_t timeout_ms) {
     if (!async_list_head) return -1;
     
-    void *page_alloced = pg_malloc(16, 4096);
-    if (!page_alloced) return -1;
+    uint64_t page_phys = palloc();
+    if (!page_phys) return -1;
+    void *page_alloced = phys_to_virt(page_phys);
     
     uintptr_t page_idx = 0;
     qh_t *qh = (qh_t *)(page_alloced + page_idx);
@@ -287,14 +313,14 @@ int ehci_submit_bulk_simple(uint8_t devaddr, uint8_t ep_addr, void *data_vaddr,
         if (overlay_token & 0x7E) {
             async_list_head->horiz_link = qh->horiz_link;
             phys_flush_cache(async_list_head, 64);
-            pg_free(16, (void *)page_alloced);
+            pfree(page_phys);
             return -3;
         }
         
         if (get_time_ms() - start > timeout_ms) {
             async_list_head->horiz_link = qh->horiz_link;
             phys_flush_cache(async_list_head, 64);
-            pg_free(16, (void *)page_alloced);
+            pfree(page_phys);
             return -2;
         }
         
@@ -308,23 +334,23 @@ int ehci_submit_bulk_simple(uint8_t devaddr, uint8_t ep_addr, void *data_vaddr,
         phys_invalidate_cache(data_vaddr, len);
     }
     
-    pg_free(16, (void *)page_alloced);
+    pfree(page_phys);
     return 0;
 }
 
-// Assume EHCI MMIO regs are already mapped
+// assume EHCI MMIO regs are already mapped
 #define EHCI_USBCMD    ((volatile uint32_t *)(ehci_base + 0x00))
 #define EHCI_ASYNCLISTADDR ((volatile uint32_t *)(ehci_base + 0x18))
 #define EHCI_USBSTS    ((volatile uint32_t *)(ehci_base + 0x04))
 
-// Flush the async schedule by telling EHCI to stop and wait for idle
+// flush the async schedule by telling EHCI to stop and wait for idle
 static int ehci_flush_async(void) {
-    // Stop async schedule
-    ehci->USBCMD &= ~(1 << 5); // Clear AsyncEnable bit
+    // stop async schedule
+    ehci->USBCMD &= ~(1 << 5); // clear AsyncEnable bit
     udelay(50);
 
     uint32_t timeout_ctr = 10000;
-    // Wait until Async Schedule Status bit is 0
+    // wait until Async Schedule Status bit is 0
     while (ehci->USBSTS & (1 << 15) && timeout_ctr--) // ASYNC_SCHEDULE_STATUS
         udelay(10);
 
@@ -334,61 +360,59 @@ static int ehci_flush_async(void) {
     return 0;
 }
 
-// Start async schedule
+// start async schedule
 static void ehci_run_async(void) {
     ehci->ASYNCLISTADDR = (uint32_t)async_list_head;
     udelay(20);
-    ehci->USBCMD |= (1 << 5); // AsyncEnable
+    ehci->USBCMD |= (1 << 5); // asyncEnable
     udelay(20);
 }
 
-/* -------------------------------------------------------------------------
-   USB Control Transfer Implementation
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    USB control transfer implementation
+// -------------------------------------------------------------------------
 int usb_control_transfer(uint8_t devaddr, usb_ctrl_setup_t *setup,
                          void *data_buf, uint16_t data_len)
 {
     if (!setup) {
-        terminal_printf("usb_control_transfer: setup ptr is NULL\n");
+        printf("usb_control_transfer: setup ptr is NULL\n");
         return -1;
     }
 
-    // Allocate one page (rounded up to 4096) for QH + two qTDs (setup + optional data + status)
+    // allocate one page (rounded up to 4096) for QH + two qTDs (setup + optional data + status)
     const size_t allocSize = 4096;
-    void *mem = pg_malloc(78, allocSize);
-    if (!mem) {
-        terminal_printf("usb_control_transfer: pg_malloc failed\n");
+    uint64_t mem_phys = palloc();
+    if (!mem_phys) {
+        printf("usb_control_transfer: palloc failed\n");
         return -2;
     }
+    void *mem = phys_to_virt(mem_phys);
     memset(mem, 0, allocSize);
 
-    // Physical address of mem region
-    uintptr_t phys_mem = (uintptr_t)virt_to_phys(mem);  // you need to implement this conversion
+    // physical address of mem region
+    uintptr_t phys_mem = (uintptr_t)virt_to_phys(mem);
 
-    // Layout: mem at base, setup qTD at base+64, data qTD at base+128, status qTD at base+192
+    // layout: mem at base, setup qTD at base+64, data qTD at base+128, status qTD at base+192
     qh_t   *qh         = (qh_t *)          mem;
     qtd_t  *qtd_setup  = (qtd_t *)((uint8_t *)mem + 64);
     qtd_t  *qtd_data   = (qtd_t *)((uint8_t *)mem + 128);
     qtd_t  *qtd_status = (qtd_t *)((uint8_t *)mem + 192);
 
-    // Zero everything
+    // zero everything
     memset(qh,         0, sizeof(qh_t));
     memset(qtd_setup,  0, sizeof(qtd_t));
     memset(qtd_data,   0, sizeof(qtd_t));
     memset(qtd_status, 0, sizeof(qtd_t));
 
-    // --- Setup qTD ---
+    // --- setup qTD ---
     qtd_setup->next   = (uint32_t)(phys_mem + 128);  // physical pointer to data qTD
-    qtd_setup->token  = (8 << 16) /* total 8 bytes */ 
-                      /* your token format: SETUP stage flagged */;  
+    qtd_setup->token  = (8 << 16); // total 8 bytes 
     memcpy(qtd_setup->buffer, setup, sizeof(*setup));
 
-    // --- Data qTD (if any) ---
+    // --- data qTD (if any) ---
     if (data_buf && data_len) {
         qtd_data->next  = (uint32_t)(phys_mem + 192); // link to status qTD
-        qtd_data->token = ((data_len & 0x7FFF) << 16)
-                         /* + PID based on bmRequestType IN or OUT */
-                         /* + active bit */;
+        qtd_data->token = ((data_len & 0x7FFF) << 16);
         uintptr_t buf = (uintptr_t)data_buf;
         for (int i = 0; i < 5; i++) {
             qtd_data->buffer[i] = (uint32_t)buf;
@@ -400,11 +424,9 @@ int usb_control_transfer(uint8_t devaddr, usb_ctrl_setup_t *setup,
         qtd_setup->next = (uint32_t)(phys_mem + 192);
     }
 
-    // --- Status qTD (zero length) ---
+    // --- status qTD (zero length) ---
     qtd_status->next  = 1; // terminate
-    qtd_status->token = (0 << 16) /* total 0 bytes */
-                       /* + PID opposite data direction (if data) or IN */
-                       /* + active bit */;
+    qtd_status->token = (0 << 16); // total 0 bytes
 
     // --- QH setup ---
     qh->curr_qtd  = 0;
@@ -413,46 +435,46 @@ int usb_control_transfer(uint8_t devaddr, usb_ctrl_setup_t *setup,
     qh->ep_char   = ((uint32_t)devaddr << 8) | (64 << 16);  // assume max packet size 64
     qh->ep_cap    = 0;
 
-    // Flush caches before handing to hardware
+    // flush caches before handing to hardware
     phys_flush_cache(mem, allocSize);
 
-    // Insert QH into async schedule
+    // insert QH into async schedule
     qh_t *old_head = async_list_head;
     async_list_head = qh;
 
-    // Start schedule
+    // start schedule
     if (ehci_flush_async() != 0) {
-        terminal_printf("usb_control_transfer: ehci_flush_async failed\n");
+        printf("usb_control_transfer: ehci_flush_async failed\n");
         async_list_head = old_head;
-        pg_free(78, mem);
+        pfree(mem_phys);
         return -3;
     }
     ehci_run_async();
 
-    // Wait for completion with timeout
+    // wait for completion with timeout
     uint64_t start = get_time_ms();
-    while ((qh->overlay.token & (1 << 7)) /* active bit */) {
+    while ((qh->overlay.token & (1 << 7))) { // active bit
         if ((get_time_ms() - start) > 5000) {  // 5 second timeout
-            terminal_printf("usb_control_transfer: timeout\n");
+            printf("usb_control_transfer: timeout\n");
             async_list_head = old_head;
-            pg_free(78, mem);
+            pfree(mem_phys);
             return -4;
         }
         udelay(100);
     }
 
-    // Invalidate cache so CPU sees updated token & buffer
+    // invalidate cache so CPU sees updated token & buffer
     phys_invalidate_cache(mem, allocSize);
 
-    // Compute actual transferred length
+    // compute actual transferred length
     int actual = data_len;
     if (data_len && !(qtd_data->token & 15<<3)) {
         actual = data_len - ((qtd_data->token >> 16) & 0x7FFF);
     }
 
-    // Cleanup
+    // cleanup
     async_list_head = old_head;
-    pg_free(78, mem);
+    pfree(mem_phys);
 
     return actual;
 }
@@ -463,9 +485,9 @@ int usb_control_transfer(uint8_t devaddr, usb_ctrl_setup_t *setup,
 
 
 
-/* -------------------------------------------------------------------------
-   Helper control transfer functions
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    helper control transfer functions
+// -------------------------------------------------------------------------
 int usb_get_device_descriptor(uint8_t devaddr, void *desc_buf, uint16_t len) {
     usb_ctrl_setup_t setup = {
         .bmRequestType = 0x80,
@@ -501,7 +523,7 @@ int usb_set_address(uint8_t new_addr) {
     if (rc == 0) {
         udelay(2000);
     }
-    terminal_printf("RCL: %u\n", rc);
+    printf("RCL: %u\n", rc);
     return rc;
 }
 
@@ -527,43 +549,45 @@ int usb_msd_reset(uint8_t devaddr, uint8_t iface_num) {
     return usb_control_transfer(devaddr, &setup, NULL, 0);
 }
 
-/* -------------------------------------------------------------------------
-   Device enumeration with descriptor parsing
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    device enumeration with descriptor parsing
+// -------------------------------------------------------------------------
 
 int find_mass_storage_device(usb_device_t *out_dev) {
-    void *desc_buf = pg_malloc(19, 4096);
-    if (!desc_buf) return -1;
-    terminal_printf("1 \n");
+    uint64_t desc_buf_phys = palloc();
+    if (!desc_buf_phys) return -1;
+    void *desc_buf = phys_to_virt(desc_buf_phys);
+    
+    printf("1 \n");
     pid_rn=18;
     memset(desc_buf, 0, 4096);
     
-    /* Get device descriptor (address 0) */
+    // get device descriptor (address 0)
     int res=usb_get_device_descriptor(0, desc_buf, 18);
     if (res != 0) {
-        pg_free(19, (void *)desc_buf);
+        pfree(desc_buf_phys);
         return -100-res;
     }
-    terminal_printf("0x%x-%x-%x-%x", desc_buf);
-    terminal_printf("2 \n");
+    printf("0x%x-%x-%x-%x", desc_buf);
+    printf("2 \n");
     pid_rn=19;
     
-    /* Set address to 1 */
+    // set address to 1
     if (usb_set_address(1) != 0) {
-        pg_free(19, (void *)desc_buf);
+        pfree(desc_buf_phys);
         return -3;
     }
-    terminal_printf("3 \n");
+    printf("3 \n");
     pid_rn=20;
     
     out_dev->address = 1;
     
-    /* Get configuration descriptor */
+    // get configuration descriptor
     if (usb_get_config_descriptor(1, desc_buf, 9) != 0) {
-        pg_free(19, (void *)desc_buf);
+        pfree(desc_buf_phys);
         return -4;
     }
-    terminal_printf("4 \n");
+    printf("4 \n");
     pid_rn=21;
     
     usb_config_descriptor_t *cfg = (usb_config_descriptor_t *)desc_buf;
@@ -571,35 +595,35 @@ int find_mass_storage_device(usb_device_t *out_dev) {
     
     if (total_len > 1024) total_len = 1024;
     
-    /* Get full configuration */
+    // get full configuration
     if (usb_get_config_descriptor(1, desc_buf, total_len) != 0) {
-        pg_free(19, (void *)desc_buf);
+        pfree(desc_buf_phys);
         return -5;
     }
-    terminal_printf("5 \n");
+    printf("5 \n");
     pid_rn=22;
     
     out_dev->config_value = cfg->bConfigurationValue;
     
-    /* Parse descriptors to find mass storage interface */
+    // parse descriptors to find mass storage interface
     uint8_t *ptr = (uint8_t *)desc_buf + 9;
     uint8_t *end = (uint8_t *)desc_buf + total_len;
     int found_msd = 0;
 
-    terminal_printf("Start 0x%x, end 0x%x", ptr, end);
+    printf("Start 0x%x, end 0x%x", ptr, end);
     
     while (ptr < end) {
         uint8_t len = ptr[0];
         uint8_t type = ptr[1];
 
         if (len < 2) {
-            terminal_printf("Bad descriptor length %u at %p\n", len, ptr);
+            printf("Bad descriptor length %u at %p\n", len, ptr);
             break;
         }
 
         if (type == 0x04 && len >= sizeof(usb_interface_descriptor_t)) {
             usb_interface_descriptor_t *iface = (usb_interface_descriptor_t *)ptr;
-            terminal_printf("Interface #%u: class=%02x subclass=%02x proto=%02x\n",
+            printf("Interface #%u: class=%02x subclass=%02x proto=%02x\n",
                             iface->bInterfaceNumber,
                             iface->bInterfaceClass,
                             iface->bInterfaceSubClass,
@@ -610,62 +634,62 @@ int find_mass_storage_device(usb_device_t *out_dev) {
                 iface->bInterfaceProtocol == USB_PROTOCOL_BULK_ONLY) {
                 out_dev->iface_number = iface->bInterfaceNumber;
                 found_msd = 1;
-                terminal_printf("  -> Found Mass Storage interface\n");
+                printf("  -> Found Mass Storage interface\n");
             }
 
         } else if (type == 0x05 && len >= sizeof(usb_endpoint_descriptor_t)) {
             usb_endpoint_descriptor_t *ep = (usb_endpoint_descriptor_t *)ptr;
-            terminal_printf("  Endpoint addr=%02x attr=%02x maxpkt=%u\n",
+            printf("  Endpoint addr=%02x attr=%02x maxpkt=%u\n",
                             ep->bEndpointAddress,
                             ep->bmAttributes,
                             ep->wMaxPacketSize);
 
-            if (found_msd && (ep->bmAttributes & 0x03) == 0x02) { /* Bulk endpoint */
+            if (found_msd && (ep->bmAttributes & 0x03) == 0x02) { // bulk endpoint
                 if (ep->bEndpointAddress & 0x80) {
                     out_dev->bulk_in.addr = ep->bEndpointAddress;
                     out_dev->bulk_in.max_packet = ep->wMaxPacketSize;
                     out_dev->bulk_in.attrs = ep->bmAttributes;
-                    terminal_printf("    -> Bulk IN endpoint registered\n");
+                    printf("    -> Bulk IN endpoint registered\n");
                 } else {
                     out_dev->bulk_out.addr = ep->bEndpointAddress;
                     out_dev->bulk_out.max_packet = ep->wMaxPacketSize;
                     out_dev->bulk_out.attrs = ep->bmAttributes;
-                    terminal_printf("    -> Bulk OUT endpoint registered\n");
+                    printf("    -> Bulk OUT endpoint registered\n");
                 }
             }
 
         } else {
-            terminal_printf("Other descriptor type=%02x len=%u\n", type, len);
+            printf("Other descriptor type=%02x len=%u\n", type, len);
         }
 
         ptr += len;
     }
 
-    pg_free(19, (void *)desc_buf);
+    pfree(desc_buf_phys);
 
     if (!found_msd) {
-        terminal_printf("No Mass Storage interface found.\n");
+        printf("No Mass Storage interface found.\n");
         return -6;
     }
 
     
-    /* Set configuration */
+    // set configuration
     if (usb_set_configuration(out_dev->address, out_dev->config_value) != 0) {
         return -7;
     }
     
     udelay(100000);
     
-    /* Perform Bulk-Only Mass Storage Reset */
+    // perform Bulk-Only Mass Storage Reset
     usb_msd_reset(out_dev->address, out_dev->iface_number);
     udelay(100000);
     
     return 0;
 }
 
-/* -------------------------------------------------------------------------
-   Mass Storage BOT functions
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    mass storage BOT functions
+// -------------------------------------------------------------------------
 
 
 int msd_send_cbw(usb_device_t *dev, void *cbw_buf) {
@@ -679,8 +703,9 @@ int msd_receive_csw(usb_device_t *dev, void *csw_buf) {
 }
 
 int msd_read_sector(usb_device_t *dev, uint32_t lba, void *buf_vaddr) {
-    void *page_alloced = pg_malloc(16, 4096);
-    if (!page_alloced) return -1;
+    uint64_t page_phys = palloc();
+    if (!page_phys) return -1;
+    void *page_alloced = phys_to_virt(page_phys);
     
     uintptr_t page_sharing_index = 0;
     struct CBW *cbw = (struct CBW *)(page_alloced + page_sharing_index);
@@ -705,43 +730,43 @@ int msd_read_sector(usb_device_t *dev, uint32_t lba, void *buf_vaddr) {
 
     phys_flush_cache(cbw, sizeof(*cbw));
     if (msd_send_cbw(dev, cbw) != 0) {
-        pg_free(16, (void *)page_alloced);
+        pfree(page_phys);
         return -2;
     }
 
     if (ehci_submit_bulk_simple(dev->address, dev->bulk_in.addr, 
                                buf_vaddr, 512, 1, 1000) != 0) {
-        pg_free(16, (void *)page_alloced);
+        pfree(page_phys);
         return -3;
     }
 
     memset(csw, 0, sizeof(*csw));
     if (msd_receive_csw(dev, csw) != 0) {
-        pg_free(16, (void *)page_alloced);
+        pfree(page_phys);
         return -4;
     }
 
     phys_invalidate_cache(csw, sizeof(*csw));
     if (csw->signature != CSW_SIGNATURE) {
-        pg_free(16, (void *)page_alloced);
+        pfree(page_phys);
         return -5;
     }
     if (csw->tag != cbw->tag) {
-        pg_free(16, (void *)page_alloced);
+        pfree(page_phys);
         return -6;
     }
     if (csw->status != 0) {
-        pg_free(16, (void *)page_alloced);
+        pfree(page_phys);
         return -7;
     }
 
-    pg_free(16, (void *)page_alloced);
+    pfree(page_phys);
     return 0;
 }
 
-/* -------------------------------------------------------------------------
-   Example usage
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    example usage
+// -------------------------------------------------------------------------
 
 int read_sector0_example(void) {
     uint16_t ports;
@@ -762,19 +787,20 @@ int read_sector0_example(void) {
     usb_device_t dev;
     if (find_mass_storage_device(&dev) != 0) return -4;
 
-    void *sector_buf = pg_malloc(18, 512);
-    if (!sector_buf) return -5;
+    uint64_t sector_buf_phys = palloc();
+    if (!sector_buf_phys) return -5;
+    void *sector_buf = phys_to_virt(sector_buf_phys);
     memset(sector_buf, 0, 512);
 
     int rc = msd_read_sector(&dev, 0, sector_buf);
     if (rc != 0) {
-        pg_free(18, (void *)sector_buf);
+        pfree(sector_buf_phys);
         return rc - 5;
     }
 
-    /* Process sector data here */
+    // process sector data here
 
-    pg_free(18, (void *)sector_buf);
+    pfree(sector_buf_phys);
     return 0;
 }
 
@@ -782,22 +808,22 @@ int read_sector0_example(void) {
 void *pci_map_ehci_mmio(uint16_t *num_ports, uintptr_t *mmio_base_out, void *bar0_virt) {    
     if (!bar0_virt) return NULL;
     
-    /* Read CAPLENGTH to find operational registers offset */
+    // read CAPLENGTH to find operational registers offset
     volatile ehci_cap_regs_t *cap_regs = (volatile ehci_cap_regs_t *)bar0_virt;
     uint8_t caplength = cap_regs->CAPLENGTH;
     
-    /* Read HCSPARAMS to get number of ports */
+    // read HCSPARAMS to get number of ports
     uint32_t hcsparams = cap_regs->HCSPARAMS;
     uint16_t n_ports = HCSPARAMS_N_PORTS(hcsparams);
     
-    /* Check if controller has Port Power Control */
+    // check if controller has Port Power Control
     int has_ppc = HCSPARAMS_PPC(hcsparams);
-    (void)has_ppc;  // You might want to use this later
+    (void)has_ppc;  // you might want to use this later
     
-    /* Return pointer to operational registers base */
+    // return pointer to operational registers base
     void *op_regs = (void *)((uintptr_t)bar0_virt + caplength);
     
-    /* Set output parameters */
+    // set output parameters
     if (num_ports) *num_ports = n_ports;
     if (mmio_base_out) *mmio_base_out = (uintptr_t)bar0_virt;
 
@@ -806,14 +832,10 @@ void *pci_map_ehci_mmio(uint16_t *num_ports, uintptr_t *mmio_base_out, void *bar
     return op_regs;
 }
 
-/* -------------------------------------------------------------------------
-   Alternative: If you want more control over the PCI scanning
-   ------------------------------------------------------------------------- */
 
-
-/* -------------------------------------------------------------------------
-   Helper: Debug print EHCI capabilities
-   ------------------------------------------------------------------------- */
+// -------------------------------------------------------------------------
+//    helper: debug print EHCI capabilities
+// -------------------------------------------------------------------------
 
 void ehci_print_capabilities(void *bar0_virt) {
     volatile ehci_cap_regs_t *cap = (volatile ehci_cap_regs_t *)bar0_virt;
@@ -823,15 +845,80 @@ void ehci_print_capabilities(void *bar0_virt) {
     uint32_t hcsparams = cap->HCSPARAMS;
     uint32_t hccparams = cap->HCCPARAMS;
     
-    terminal_printf("EHCI Capability Registers:\n");
-    terminal_printf("  CAPLENGTH:  0x%x (%d bytes)\n", caplength, caplength);
-    terminal_printf("  HCIVERSION: 0x%x (USB %d.%d)\n", 
+    printf("EHCI Capability Registers:\n");
+    printf("  CAPLENGTH:  0x%x (%d bytes)\n", caplength, caplength);
+    printf("  HCIVERSION: 0x%x (USB %d.%d)\n", 
                    hciversion, (hciversion >> 8) & 0xFF, hciversion & 0xFF);
-    terminal_printf("  HCSPARAMS:  0x%x\n", hcsparams);
-    terminal_printf("    N_PORTS:  %d\n", HCSPARAMS_N_PORTS(hcsparams));
-    terminal_printf("    PPC:      %s\n", HCSPARAMS_PPC(hcsparams) ? "Yes" : "No");
-    terminal_printf("    N_CC:     %d companion controllers\n", HCSPARAMS_N_CC(hcsparams));
-    terminal_printf("  HCCPARAMS:  0x%x\n", hccparams);
-    terminal_printf("  Op Regs at: BAR0 + 0x%x\n", caplength);
+    printf("  HCSPARAMS:  0x%x\n", hcsparams);
+    printf("    N_PORTS:  %d\n", HCSPARAMS_N_PORTS(hcsparams));
+    printf("    PPC:      %s\n", HCSPARAMS_PPC(hcsparams) ? "Yes" : "No");
+    printf("    N_CC:     %d companion controllers\n", HCSPARAMS_N_CC(hcsparams));
+    printf("  HCCPARAMS:  0x%x\n", hccparams);
+    printf("  Op Regs at: BAR0 + 0x%x\n", caplength);
     
+}
+
+void ehci_init(uint64_t phys_mmio) {
+    volatile ehci_cap_regs_t *cap =
+        (volatile ehci_cap_regs_t *)phys_to_virt(phys_mmio);
+
+    volatile struct ehci_regs *op =
+        (volatile struct ehci_regs *)((uintptr_t)cap + cap->CAPLENGTH);
+
+    LOG(Debug, EHCI, "EHCI version %x\n", cap->HCIVERSION);
+
+    // stop controller
+    op->USBCMD &= ~1;
+    while (!(op->USBSTS & (1 << 12)));
+
+    // reset controller 
+    op->USBCMD |= (1 << 1);
+    while (op->USBCMD & (1 << 1));
+
+    // allocate async QH (DMA memory)
+    uint64_t qh_phys = palloc();
+    void *qh_virt = phys_to_virt(qh_phys);
+    memset(qh_virt, 0, 4096);
+
+    // dummy QH 
+    uint32_t *qh = qh_virt;
+    qh[0] = qh_phys | 0x2;     // horizontal link (QH)
+    qh[1] = (1 << 30);         // head of reclaim
+    qh[2] = 1;                 // terminate overlay
+
+    op->ASYNCLISTADDR = qh_phys;
+
+    // enable async schedule 
+    op->USBCMD |= (1 << 5);
+
+    // run controller
+    op->USBCMD |= 1;
+
+    // route ports to EHCI 
+    op->CONFIGFLAG = 1;
+
+    LOG(Ok, ehci_init, "EHCI controller started\n");
+}
+
+
+void ehci_pci_init(uint8_t bus, uint8_t dev, uint8_t func) {
+    uint32_t bar0 = pci_read(bus, dev, func, 0x10);
+    if (bar0 & 0x1) {
+        LOG(Error, EHCI, "EHCI BAR0 is I/O, expected MMIO\n");
+        return;
+    }
+
+    uint64_t phys = bar0 & 0xFFFFFFF0;
+    uint32_t size = pci_get_bar_size(bus, dev, func, 0x10);
+
+    LOG(Debug, EHCI, "EHCI MMIO phys=%p size=%u\n", phys, size);
+    for (uint64_t off = 0; off < size; off += 0x1000) {
+        map_page(
+            phys + off,
+            phys + off,
+            PTE_PRESENT | PTE_WRITABLE | PTE_CACHE_DISABLE | PTE_WRITE_THROUGH
+        );
+    }
+
+    ehci_init(phys);
 }

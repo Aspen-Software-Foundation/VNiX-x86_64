@@ -81,6 +81,10 @@ kernel:
 	gcc -c src/drivers/storage/atapi.c -o build/atapi.o $(CFLAGS)
 	gcc -c src/drivers/time/time.c -o build/time.o $(CFLAGS)
 	gcc -c src/drivers/shell/shell.c -o build/shell.o $(CFLAGS)
+	gcc -c src/util/pit.c -o build/pit.o $(CFLAGS)
+	gcc -c src/drivers/time/tsc.c -o build/tsc.o $(CFLAGS)
+	gcc -c src/drivers/hci/ehci.c -o build/ehci.o $(CFLAGS)
+	gcc -c src/drivers/pci/pci.c -o build/pci.o $(CFLAGS)
 	nasm -f elf64 src/arch/x86_64/isr_stubs.asm -o build/isr_stubs.o
 # After much research, i've concluded on this linking order because it looks much better than the hellish alternative i initially had
 	@echo "$(CYAN)=-=-=-=-=-=-=-=-=-=-=-=-=-=-$(NC)"
@@ -115,6 +119,10 @@ kernel:
 		build/sata.o\
 		build/time.o\
 		build/shell.o\
+		build/tsc.o\
+		build/pit.o\
+		build/pci.o\
+		build/ehci.o\
 
 	@echo "$(MAGENTA)Stripping debug info...$(NC)"
 	objcopy --strip-debug build/kernel.elf
@@ -170,6 +178,8 @@ run:
 	qemu-system-x86_64 $(if $(QEMU_CPU),-cpu $(QEMU_CPU)) \
 		$(QEMU_MEM) \
 		-bios ovmf/OVMF.fd \
+		-usb \
+    	-device usb-ehci,id=ehci \
 		-drive file=build/VNiX-uefi_dev-prototype.img,format=raw \
 		-serial stdio
 

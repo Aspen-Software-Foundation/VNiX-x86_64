@@ -37,6 +37,9 @@
 */
 //NOTE: This code used to be apart of another file, but was moved here for convenience.
 
+#ifndef UTIL_H
+#define UTIL_H
+
 #define CONCAT_IMPL(x, y) x##y
 #define CONCAT(x, y) CONCAT_IMPL(x, y)
 
@@ -151,3 +154,5 @@ static inline uint16_Vector3_t make_uint16_vector3(uint16_t x, uint16_t y, uint8
 
 uint16_Vector3_t rotate_point_x(uint16_Vector3_t point, float angle);
 uint16_Vector3_t rotate_point_y(uint16_Vector3_t point, float angle);
+
+#endif

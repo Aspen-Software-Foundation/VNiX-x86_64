@@ -56,6 +56,8 @@
 #include "includes/shell/keyboard.h"
 #include "includes/shell/shell.h"
 #include "includes/storage/stinit.h"
+#include "includes/hci/ehci.h"
+#include "includes/pci/pci.h"
 
 // IMPORTANT: Define the global flanterm context that printf uses
 extern struct flanterm_context *global_flanterm;
@@ -124,11 +126,16 @@ void kernel_main(void) {
     IDT_Initialize();
     vmm_init();
     pmm_init();
-    enable_interrupts();
     ISR_Initialize();
-        APIC_IRQ_Initialize();
+    APIC_IRQ_Initialize();
     keyboard_apic_init();
     storage_init();
+    enable_interrupts();
+
+ start_pci_enumeration(); 
+
+
+
         void vmm_test_mapping(void) {
     uint64_t virt = 0x1000000000;  // idfk virtual address
     uint64_t phys = 0x200000;      // idfk physical address

@@ -50,34 +50,6 @@
 uint8_t atapi_status = 0;
 uint8_t atapi_error  = 0;
 
-static inline void outsw(uint16_t port, const void *buf, unsigned long count) {
-    __asm__ __volatile__ (
-        "cld; rep outsw"
-        : "+S"(buf), "+c"(count)
-        : "d"(port)
-        : "memory"
-    );
-}
-
-static inline uint16_t inw(uint16_t port) {
-    uint16_t ret;
-    __asm__ __volatile__ (
-        "inw %1, %0"
-        : "=a"(ret)
-        : "d"(port)
-    );
-    return ret;
-}
-
-static inline void insw(uint16_t port, void *buf, unsigned long count) {
-    __asm__ __volatile__ (
-        "cld; rep insw"
-        : "+D"(buf), "+c"(count)
-        : "d"(port)
-        : "memory"
-    );
-}
-
 
 
 int atapi_read_sector(uint32_t lba, uint16_t sector_count, void *buffer, uint8_t drive, uint32_t sector_size) {

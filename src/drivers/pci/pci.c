@@ -9,14 +9,28 @@
 */
 
 #include <stdint.h>
-#include <pci/pci.h>
-#include <arch/x86/io.h>
-#include <storage/sata.h>
-#include <memory/paging.h>
-#include <lightshell/terminal.h>
-#include <time/time.h>
+#include <stdlib.h>
+#include "includes/pci/pci.h"
+#include "includes/arch/x86_64/io.h"
+#include "includes/storage/sata.h"
+#include "includes/time/time.h"
+#include "util/includes/log-info.h"
+#include "includes/memory/vmm.h"
+#include "includes/hci/ehci.h"
 
-extern uint32_t pid_rn;
+#ifndef PTE_CACHE_DISABLE
+#define PTE_CACHE_DISABLE   (1ULL << 4)  
+#endif
+
+#ifndef PTE_WRITE_THROUGH
+#define PTE_WRITE_THROUGH   (1ULL << 3) 
+#endif
+
+#ifndef PTE_PRESENT
+#define PTE_PRESENT         (1ULL << 0)   
+#endif
+
+uint32_t pid_rn = 0;
 
 uint32_t pci_read(uint8_t bus, uint8_t device, uint8_t func, uint8_t offset) {
     uint32_t address = (1U << 31)
@@ -73,20 +87,44 @@ void scan_pci_device(uint8_t bus, uint8_t device) {
                     type = "SATA AHCI";
                     uint32_t bar5 = pci_read(bus, device, func, 0x24);
                     uint32_t ahci_base = bar5 & 0xFFFFFFF0;
-
-                    terminal_printf(" [%f] ./pci/pci.c: AHCI MMIO base address: 0x%x\n", get_time_ms_fp()/1000, ahci_base);
+                    LOG(Debug, scan_pci_device, "AHCI MMIO base address: 0x%x\n", ahci_base);
                     pid_rn = 7;
-                    set_page_mapping(ahci_base, ahci_base, PAGE_MMIODEFAULT);
+                    
+                    // Map MMIO region with cache disabled for device memory
+                    map_page(ahci_base, ahci_base, PTE_WRITABLE | PTE_CACHE_DISABLE | PTE_WRITE_THROUGH);
+                    
                     sata_search(ahci_base);
                 } else {
                     type = "SATA (non-AHCI)";
                 }
             }
 
-            terminal_printf("[%f] ./pci/pci.c: %s Controller: bus=%u dev=%u func=%u vendor id=0x%x dev id=0x%x\n",
-               get_time_ms_fp()/1000, type, bus, device, func, vid, did);
+            LOG(Debug, scan_pci_device, "");
+            printf("%s Controller: bus=%u dev=%u func=%u vendor id=0x%x dev id=0x%x\n", type, bus, device, func, vid, did);
+            
         } else if (class_code == 0x0C && subclass == 0x03) {
-            terminal_printf("[%f] ./pci/pci.c: USB Controller: bus=%u dev=%u func=%u vendor=0x%x dev=0x%x\n", get_time_ms_fp()/1000, bus, device, func, vid, did);
+            // USB Controller
+            const char* usb_type = "Unknown USB";
+            
+            if (prog_if == 0x00) {
+                usb_type = "UHCI";
+            } else if (prog_if == 0x10) {
+                usb_type = "OHCI";
+            } else if (prog_if == 0x20) {
+                usb_type = "EHCI";
+                LOG(Debug, scan_pci_device, "");
+                printf("EHCI Controller: bus=%u dev=%u func=%u vendor=0x%x dev=0x%x\n", 
+                       bus, device, func, vid, did);
+                ehci_pci_init(bus, device, func);
+                
+            } else if (prog_if == 0x30) {
+                usb_type = "xHCI";
+            }
+            
+            LOG(Debug, scan_pci_device, "");
+            printf("%s Controller: bus=%u dev=%u func=%u vendor=0x%x dev=0x%x\n", 
+                   usb_type, bus, device, func, vid, did);
+                   
         } else if (class_code == 0x06 && subclass == 0x04) {
             uint32_t bus_data = pci_read(bus, device, func, 0x18);
             uint8_t secondary_bus = (bus_data >> 8) & 0xFF;
@@ -140,4 +178,10 @@ uint32_t pci_get_bar_size(uint8_t bus, uint8_t device, uint8_t func, uint8_t off
     uint32_t size = (~size_mask) + 1;
 
     return size;
+}
+
+uint32_t pci_read_bar(uint8_t bus, uint8_t device, uint8_t func, uint8_t bar_num) {
+    if (bar_num > 5) return 0; // PCI has 6 BARs (0-5)
+    uint8_t offset = 0x10 + (bar_num * 4);
+    return pci_read(bus, device, func, offset);
 }
